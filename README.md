@@ -1,2 +1,3 @@
-# distributed_calculations_go
+# Distributed Calculations
 Distributed calculations written in Go language
+
