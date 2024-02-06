@@ -1,36 +1,25 @@
 package main
 
 import (
+	_ "calculationServer/docs"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
 	"strconv"
-
-	_ "github.com/Anton-beep/distributed_calculations_go/docs/calculationServer"
 )
-import "github.com/swaggo/gin-swagger" // gin-swagger middleware
-import "github.com/swaggo/files"       // swagger embed files
 
-// @title           Swagger Example API
+// @title           Calculation Server API
 // @version         1.0
-// @description     This is a sample server celler server.
-// @termsOfService  http://swagger.io/terms/
-
-// @contact.name   API Support
-// @contact.url    http://www.swagger.io/support
-// @contact.email  support@swagger.io
-
-// @license.name  Apache 2.0
-// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+// @description     This is a calculation server.
 
 // @host      localhost:8080
 // @BasePath  /api/v1
+func main() {
+	r := gin.Default()
 
-// @securityDefinitions.basic  BasicAuth
-
-// @externalDocs.description  OpenAPI
-// @externalDocs.url          https://swagger.io/resources/open-api/
-
-type Controller struct {
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r.Run(":8080")
 }
 
 // ShowAccount godoc
@@ -45,7 +34,7 @@ type Controller struct {
 // @Failure      404  {object}  string
 // @Failure      500  {object}  string
 // @Router       /accounts/{id} [get]
-func (c *Controller) ShowAccount(ctx *gin.Context) {
+func ShowAccount(ctx *gin.Context) {
 	id := ctx.Param("id")
 	aid, err := strconv.Atoi(id)
 	if err != nil {
@@ -63,17 +52,11 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 // @Param        q    query     string  false  "name search by q"  Format(email)
 // @Success      200  {array}   string
 // @Failure      400  {object}  string
-// @Failure      404  {object}	string
-// @Failure      500  {object}	string
+// @Failure      404  {object}  string
+// @Failure      500  {object}  string
 // @Router       /accounts [get]
-func (c *Controller) ListAccounts(ctx *gin.Context) {
+func ListAccounts(ctx *gin.Context) {
 	q := ctx.Request.URL.Query().Get("q")
+	// accounts, err := model.AccountsAll(q)
 	ctx.JSON(http.StatusOK, q)
-}
-
-func main() {
-	r := gin.Default()
-
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	r.Run(":8080")
 }
