@@ -19,12 +19,19 @@ func NewApi(storageUrl, secret string) *Api {
 	}
 }
 
-func (a *Api) Start() {
+func (a *Api) SetupRouter() *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/api/v1/ping", a.pong)
 
+	// authorized := r.Group("/auth", a.checkAuth)
+	// swagger (documentation)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
+	return router
+}
+
+func (a *Api) Start(router *gin.Engine) {
 	err := router.Run(":8080")
 	if err != nil {
 		return

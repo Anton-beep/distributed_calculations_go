@@ -2,7 +2,7 @@ package Api
 
 import "github.com/gin-gonic/gin"
 
-type pong struct {
+type Pong struct {
 	Message string `json:"message"`
 }
 
@@ -17,7 +17,10 @@ type pong struct {
 //	@Success		200	{object}	pong
 //	@Router			/ping [get]
 func (a *Api) pong(c *gin.Context) {
-	c.JSON(200, pong{Message: "pong"})
+	c.JSON(200, Pong{Message: "pong"})
+}
+
+type newTask struct {
 }
 
 func (a *Api) postTask(c *gin.Context) {

@@ -13,5 +13,5 @@ import (
 // @BasePath	/api/v1
 func main() {
 	a := Api.NewApi(STORAGE_URL, SECRET_KEY)
-	a.Start()
+	a.Start(a.SetupRouter())
 }
