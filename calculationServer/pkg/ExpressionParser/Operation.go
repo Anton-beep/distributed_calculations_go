@@ -91,7 +91,7 @@ func (o *Operation) Calculate() (chan int, error) {
 
 		res = num1 * num2
 	} else {
-		return nil, errors.New("unknown/wrong operator")
+		return nil, errors.New("unknown/wrong Operator")
 	}
 
 	chanOut := make(chan int)
