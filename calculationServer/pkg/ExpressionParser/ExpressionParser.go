@@ -1,11 +1,20 @@
 package ExpressionParser
 
 import (
+	"calculationServer/internal/ExpressionLogger"
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+)
+
+const (
+	ADD = iota
+	SUBTRACT
+	DIVIDE
+	MULTIPLY
 )
 
 type OperationOrNum struct {
@@ -24,32 +33,11 @@ type ExecTimeConfig struct {
 }
 
 type ExpressionParser struct {
-	data            map[int]OperationOrNum // here will be stored simple functions, which will return a simple number and operations calculate, both must return channel to read int from
-	amountOfWorkers int
+	numberOfWorkers int
 	execTimeConfig  ExecTimeConfig
-	lock            sync.RWMutex
-}
-
-func NewExpressionParser() *ExpressionParser {
-	return &ExpressionParser{
-		amountOfWorkers: 1,
-	}
-}
-
-func IsExecTimeConfigCorrect(execTimeConfig ExecTimeConfig) (bool, error) {
-	if execTimeConfig.TimeAdd < 0 || execTimeConfig.TimeSubtract < 0 || execTimeConfig.TimeDivide < 0 ||
-		execTimeConfig.TimeMultiply < 0 {
-		return false, errors.New("execution time cannot be smaller than 0")
-	}
-	return true, nil
-}
-
-func (e *ExpressionParser) SetExecTimes(execTimeConfig ExecTimeConfig) error {
-	if _, err := IsExecTimeConfigCorrect(execTimeConfig); err != nil {
-		return err
-	}
-	e.execTimeConfig = execTimeConfig
-	return nil
+	mu              sync.Mutex
+	expression      string
+	logs            *ExpressionLogger.ExpLogger
 }
 
 func isByteNumber(b byte) bool {
@@ -57,20 +45,6 @@ func isByteNumber(b byte) bool {
 		return true
 	}
 	return false
-}
-
-func convertByteToOperator(b byte) (int, error) {
-	switch b {
-	case []byte("+")[0]:
-		return ADD, nil
-	case []byte("-")[0]:
-		return SUBTRACT, nil
-	case []byte("*")[0]:
-		return MULTIPLY, nil
-	case []byte("/")[0]:
-		return DIVIDE, nil
-	}
-	return 0, errors.New("not an Operator")
 }
 
 func isOperatorGreater(b1 string, b2 string) bool {
@@ -94,8 +68,85 @@ func isOperatorGreater(b1 string, b2 string) bool {
 	return false
 }
 
+func convertByteToOperator(b byte) (int, error) {
+	switch b {
+	case []byte("+")[0]:
+		return ADD, nil
+	case []byte("-")[0]:
+		return SUBTRACT, nil
+	case []byte("*")[0]:
+		return MULTIPLY, nil
+	case []byte("/")[0]:
+		return DIVIDE, nil
+	}
+	return 0, errors.New("not an Operator")
+}
+
+func convertOperatorToString(oper int) (string, error) {
+	switch oper {
+	case ADD:
+		return "+", nil
+	case SUBTRACT:
+		return "-", nil
+	case DIVIDE:
+		return "/", nil
+	case MULTIPLY:
+		return "*", nil
+	default:
+		return "", errors.New("no such operator")
+	}
+}
+
+func IsExecTimeConfigCorrect(execTimeConfig ExecTimeConfig) (bool, error) {
+	if execTimeConfig.TimeAdd < 0 || execTimeConfig.TimeSubtract < 0 || execTimeConfig.TimeDivide < 0 ||
+		execTimeConfig.TimeMultiply < 0 {
+		return false, errors.New("execution time cannot be smaller than 0")
+	}
+	return true, nil
+}
+
+func NewExpressionParser() *ExpressionParser {
+	return &ExpressionParser{
+		numberOfWorkers: 1,
+		logs:            ExpressionLogger.New(),
+	}
+}
+
+func (e *ExpressionParser) getTimeForOperator(operator int) (time.Duration, error) {
+	switch operator {
+	case ADD:
+		return e.execTimeConfig.TimeAdd, nil
+	case SUBTRACT:
+		return e.execTimeConfig.TimeSubtract, nil
+	case MULTIPLY:
+		return e.execTimeConfig.TimeMultiply, nil
+	case DIVIDE:
+		return e.execTimeConfig.TimeDivide, nil
+	default:
+		return 0, errors.New("not an operator")
+	}
+}
+
+func (e *ExpressionParser) SetExecTimes(execTimeConfig ExecTimeConfig) error {
+	if _, err := IsExecTimeConfigCorrect(execTimeConfig); err != nil {
+		return err
+	}
+	e.execTimeConfig = execTimeConfig
+	return nil
+}
+
+func (e *ExpressionParser) SetNumberOfWorkers(in int) error {
+	if in < 1 {
+		return errors.New("number of workers must be bigger than 0")
+	}
+	e.numberOfWorkers = in
+	return nil
+}
+
 // ConvertExpressionInRPN see an animation https://somethingorotherwhatever.com/shunting-yard-animation/
 func (e *ExpressionParser) ConvertExpressionInRPN(expression string) ([]string, error) {
+	e.logs.Add("Start conversion to reversed polish notation")
+
 	stack := make([]string, 0)
 	out := make([]string, 0)
 
@@ -183,9 +234,11 @@ func (e *ExpressionParser) ConvertExpressionInRPN(expression string) ([]string, 
 		stack = stack[:len(stack)-1]
 	}
 
+	e.logs.Add("Result: " + strings.Join(out, " "))
 	return out, nil
 }
 
+// ReadRPN read reversed polish notation and convert to slice, ao it can be calculated later
 func (e *ExpressionParser) ReadRPN(expressionRPN []string) ([]OperationOrNum, error) {
 	stack := make([]int, 0)
 	data := make([]OperationOrNum, len(expressionRPN))
@@ -224,46 +277,13 @@ func (e *ExpressionParser) ReadRPN(expressionRPN []string) ([]OperationOrNum, er
 	return data, nil
 }
 
-func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (int, error) {
-	return e.calculatorOrganizer(data)
-	/*
-		select {
-		case calcRes := <-ansChan:
-			return calcRes, nil
-		case err := <-errChan:
-			// control errors
-			return 0, err
-		}
-	*/
-}
-
-func (e *ExpressionParser) isOperator(operator int) bool {
-	return operator == ADD || operator == SUBTRACT || operator == MULTIPLY || operator == DIVIDE
-}
-
-func (e *ExpressionParser) getTimeForOperator(operator int) (time.Duration, error) {
-	switch operator {
-	case ADD:
-		return e.execTimeConfig.TimeAdd, nil
-	case SUBTRACT:
-		return e.execTimeConfig.TimeSubtract, nil
-	case MULTIPLY:
-		return e.execTimeConfig.TimeMultiply, nil
-	case DIVIDE:
-		return e.execTimeConfig.TimeDivide, nil
-	default:
-		return 0, errors.New("not an operator")
-	}
-}
-
-func (e *ExpressionParser) calculateOperation(num1, num2, operator int) (int, error) {
-	if !e.isOperator(operator) {
+func (e *ExpressionParser) CalculateOperation(num1, num2, operator int) (int, error) {
+	e.mu.Lock()
+	duration, err := e.getTimeForOperator(operator)
+	e.mu.Unlock()
+	if err != nil {
 		return 0, fmt.Errorf("%v is not an operator", operator)
 	}
-
-	e.lock.RLock()
-	duration, _ := e.getTimeForOperator(operator)
-	e.lock.RUnlock()
 
 	switch operator {
 	case ADD:
@@ -290,18 +310,17 @@ func (e *ExpressionParser) calculateOperation(num1, num2, operator int) (int, er
 	return 0, errors.New("unknown operator")
 }
 
-// aka workerPool
-func (e *ExpressionParser) calculatorOrganizer(data []OperationOrNum) (int, error) {
+// CalculateRPNData aka workerPool
+func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (int, error) {
 	// pool will control number of workers at the same time
-	if e.amountOfWorkers < 1 {
+	e.logs.Add("Start of calculations")
+	if e.numberOfWorkers < 1 {
 		return 0, errors.New("number of workers must be bigger than 0")
 	}
 
 	errChan := make(chan error)
-
-	mu := sync.Mutex{}
 	running := 0
-	readyChan := make(chan bool, e.amountOfWorkers*2)
+	readyChan := make(chan bool, e.numberOfWorkers*2)
 	// to understand, when this goroutine will go through all data elements
 
 	for ind, el := range data {
@@ -310,16 +329,14 @@ func (e *ExpressionParser) calculatorOrganizer(data []OperationOrNum) (int, erro
 		if !el.IsOperation {
 			continue
 		} else {
-
 			for {
-				mu.Lock()
-				fmt.Println(data, el, running, e.amountOfWorkers)
-				if !data[el.OperationId1].IsOperation && !data[el.OperationId2].IsOperation && running < e.amountOfWorkers {
+				e.mu.Lock()
+				if !data[el.OperationId1].IsOperation && !data[el.OperationId2].IsOperation && running < e.numberOfWorkers {
 					// we can start new worker
-					mu.Unlock()
+					e.mu.Unlock()
 					break
 				}
-				mu.Unlock()
+				e.mu.Unlock()
 				select {
 				case <-readyChan:
 					// wait one worker to be done
@@ -331,32 +348,31 @@ func (e *ExpressionParser) calculatorOrganizer(data []OperationOrNum) (int, erro
 
 			running++
 			go func() {
-				fmt.Println("start operation", ind, data[el.OperationId1].IsOperation, data[el.OperationId2].IsOperation)
-				// write something in pool, so max number of working goroutines will be equal to e.amountOfWorkers
-				fmt.Printf("operation %v start \n", ind)
-
-				mu.Lock()
+				e.mu.Lock()
 				// take numbers from data
 				num1, num2 := data[el.OperationId1].Data, data[el.OperationId2].Data
-				mu.Unlock()
+				e.mu.Unlock()
+
+				strOper, err := convertOperatorToString(el.Operator)
+				e.logs.Add(fmt.Sprintf("Start worker with id %v; work: %v %v %v", ind, num1, strOper, num2))
+
 				// calculate with delays
-				outOper, err := e.calculateOperation(num1, num2, el.Operator)
-				fmt.Println("operation", num1, num2, el.Operator, outOper)
+				outOper, err := e.CalculateOperation(num1, num2, el.Operator)
+
+				e.logs.Add(fmt.Sprintf("End of worker with id %v; work was %v %v %v; result is %v", ind, num1, strOper, num2, outOper))
 				// if error, write in a channel
 				if err != nil {
 					errChan <- err
 					return
 				}
-				mu.Lock()
+				e.mu.Lock()
 				// write result of an operation
 				data[ind] = OperationOrNum{Data: outOper}
-				mu.Unlock()
+				e.mu.Unlock()
 
-				fmt.Printf("operation %v end \n", ind)
-
-				mu.Lock()
+				e.mu.Lock()
 				running--
-				mu.Unlock()
+				e.mu.Unlock()
 				// read one element from pool, so new goroutine can turn on
 				readyChan <- true
 			}()
@@ -372,25 +388,27 @@ func (e *ExpressionParser) calculatorOrganizer(data []OperationOrNum) (int, erro
 		}
 	}
 
-	fmt.Println("ans:", data[len(data)-1].Data, len(data)-1)
+	e.logs.Add(fmt.Sprintf("All workers are stopped; the final result is %v", data[len(data)-1].Data))
+
 	return data[len(data)-1].Data, nil
 }
 
-func (e *ExpressionParser) CalculateExpression(in string) (int, error) {
+func (e *ExpressionParser) CalculateExpression(in string) (int, string, error) {
+	e.logs.Reset()
 	// convert to RPN
 	rpn, err := e.ConvertExpressionInRPN(in)
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
 	// read rpn, setup for calculator
 	data, err := e.ReadRPN(rpn)
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
 	// calculate
 	res, err := e.CalculateRPNData(data)
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
-	return res, nil
+	return res, e.logs.Get(), nil
 }
