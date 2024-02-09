@@ -18,7 +18,7 @@ func TestConvertToRPN(t *testing.T) {
 		{"complicated", "3 + 4 * 2 / (1 - 5)", []string{"3", "4", "2", "*", "1", "5", "-", "/", "+"}, false},
 		{"double brackets", "2 * ((1 + 1) + 1)", []string{"2", "1", "1", "+", "1", "+", "*"}, false},
 		{"wrong (unexpected symbol)", "3 + 4 * 2 / (1s - 5)", nil, true},
-		{"wrong (two operators in a row)", "3 + 4 * 2 / (1 - - 5)", nil, true},
+		{"strange notation (two operators - in a row)", "1 - -1", []string{"1", "-1", "-"}, false},
 		{"wrong (two numbers in a row)", "3 + 4 * 2 2 / (1 - 5)", nil, true},
 		{"extra brackets", "((1 + 2))", []string{"1", "2", "+"}, false},
 		{"operator from stack (o1 is +, o2 is *)", "4 * 3 + 2", []string{"4", "3", "*", "2", "+"}, false},
@@ -43,26 +43,26 @@ func TestReadRPN(t *testing.T) {
 	type element struct {
 		name      string
 		in        []string
-		out       map[int]ExpressionParser.OperationOrNum
+		out       []ExpressionParser.OperationOrNum
 		wantError bool
 	}
 
 	tests := []element{
-		{name: "simple", in: []string{"3", "4", "+"}, out: map[int]ExpressionParser.OperationOrNum{
-			0: {false, 0, 0, 0, 3},
-			1: {false, 0, 0, 0, 4},
-			2: {true, 0, 1, 0, 0},
+		{name: "simple", in: []string{"3", "4", "+"}, out: []ExpressionParser.OperationOrNum{
+			{false, 0, 0, 0, 3},
+			{false, 0, 0, 0, 4},
+			{true, 0, 1, 0, 0},
 		}},
-		{name: "complicated", in: []string{"3", "4", "2", "*", "1", "5", "-", "/", "+"}, out: map[int]ExpressionParser.OperationOrNum{
-			0: {false, 0, 0, 0, 3},
-			1: {false, 0, 0, 0, 4},
-			2: {false, 0, 0, 0, 2},
-			3: {true, 1, 2, 3, 0},
-			4: {false, 0, 0, 0, 1},
-			5: {false, 0, 0, 0, 5},
-			6: {true, 4, 5, 1, 0},
-			7: {true, 3, 6, 2, 0},
-			8: {true, 0, 7, 0, 0},
+		{name: "complicated", in: []string{"3", "4", "2", "*", "1", "5", "-", "/", "+"}, out: []ExpressionParser.OperationOrNum{
+			{false, 0, 0, 0, 3},
+			{false, 0, 0, 0, 4},
+			{false, 0, 0, 0, 2},
+			{true, 1, 2, 3, 0},
+			{false, 0, 0, 0, 1},
+			{false, 0, 0, 0, 5},
+			{true, 4, 5, 1, 0},
+			{true, 3, 6, 2, 0},
+			{true, 0, 7, 0, 0},
 		}},
 		{name: "too many operators", in: []string{"1", "2", "+", "+"}, out: nil, wantError: true},
 		{name: "too many numbers", in: []string{"1", "2", "3", "+"}, out: nil, wantError: true},
@@ -74,6 +74,71 @@ func TestReadRPN(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, err := ep.ReadRPN(tt.in)
+			if tt.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.out, actual)
+			}
+		})
+	}
+}
+
+func TestCalculation(t *testing.T) {
+	type element struct {
+		name      string
+		in        []ExpressionParser.OperationOrNum
+		out       int
+		wantError bool
+	}
+	tests := []element{
+		{"simple", []ExpressionParser.OperationOrNum{
+			{false, 0, 0, 0, 3},
+			{false, 0, 0, 0, 4},
+			{true, 0, 1, 0, 0},
+		}, 7, false},
+	}
+
+	ep := ExpressionParser.NewExpressionParser()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual, err := ep.CalculateRPNData(tt.in)
+			if tt.wantError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.out, actual)
+			}
+		})
+	}
+}
+
+func TestFullProcess(t *testing.T) {
+	type element struct {
+		in        string
+		out       int
+		wantError bool
+	}
+	tests := []element{
+		{"1 + 1", 2, false},
+		{"2 + 2", 4, false},
+		{"2 + 2 * 2", 6, false},
+		{"2 * 2 * 2", 8, false},
+		{"(2 + 2) * 2", 8, false},
+		{"3 + 4 * 2 / (1 - 5)", 1, false},
+		{"1", 1, false},
+		{"-1", -1, false},
+		{"2 * (-1)", -2, false},
+		{"2 2 - 2", 0, true},
+		{"1 - + 1", 0, false},
+		{"1 + ()", 0, true},
+		{"1 + (1)", 2, false},
+	}
+
+	ep := ExpressionParser.NewExpressionParser()
+	for _, tt := range tests {
+		t.Run(tt.in, func(t *testing.T) {
+			actual, err := ep.CalculateExpression(tt.in)
 			if tt.wantError {
 				assert.Error(t, err)
 			} else {

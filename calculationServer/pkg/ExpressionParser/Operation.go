@@ -1,9 +1,7 @@
 package ExpressionParser
 
 import (
-	"errors"
 	"sync"
-	"time"
 )
 
 const (
@@ -14,68 +12,52 @@ const (
 )
 
 type Operation struct {
-	operator         int
-	chan1            <-chan int
-	chan2            <-chan int
-	execTimeAdd      time.Duration
-	execTimeSubtract time.Duration
-	execTimeDivide   time.Duration
-	execTimeMultiply time.Duration
-	lock             sync.RWMutex
+	operator       int
+	chan1          <-chan int
+	chan2          <-chan int
+	execTimeConfig ExecTimeConfig
+	lock           sync.RWMutex
 }
 
-func NewOperation(operator int, chan1, chan2 chan int, execTimeAdd, execTimeSubtract, execTimeDivide, execTimeMultiply time.Duration) *Operation {
+func NewOperation(operator int, chan1, chan2 chan int, execTimeConfig ExecTimeConfig) *Operation {
 	return &Operation{
-		operator:         operator,
-		chan1:            chan1,
-		chan2:            chan2,
-		execTimeAdd:      execTimeAdd,
-		execTimeSubtract: execTimeSubtract,
-		execTimeDivide:   execTimeDivide,
-		execTimeMultiply: execTimeMultiply,
+		operator:       operator,
+		chan1:          chan1,
+		chan2:          chan2,
+		execTimeConfig: execTimeConfig,
+		lock:           sync.RWMutex{},
 	}
 }
 
-func (o *Operation) SetExecTimes(execTimeAdd, execTimeSubtract, execTimeDivide, execTimeMultiply time.Duration) error {
-	if execTimeAdd < 0 {
-		return errors.New("execution time cannot be smaller than 0")
+func (o *Operation) SetExecTimes(execTimeConfig ExecTimeConfig) error {
+	if _, err := IsExecTimeConfigCorrect(execTimeConfig); err != nil {
+		return err
 	}
-	if execTimeSubtract < 0 {
-		return errors.New("execution time cannot be smaller than 0")
-	}
-	if execTimeDivide < 0 {
-		return errors.New("execution time cannot be smaller than 0")
-	}
-	if execTimeMultiply < 0 {
-		return errors.New("execution time cannot be smaller than 0")
-	}
-	o.execTimeAdd = execTimeAdd
-	o.execTimeSubtract = execTimeSubtract
-	o.execTimeDivide = execTimeDivide
-	o.execTimeMultiply = execTimeMultiply
+	o.execTimeConfig = execTimeConfig
 	return nil
 }
 
-func (o *Operation) Calculate() (chan int, error) {
+/*
+func (o *Operation) CalculateRPNData() (chan int, error) {
 	num1, num2 := <-o.chan1, <-o.chan2
 	res := 0
 	if o.operator == ADD {
 		o.lock.RLock()
-		d := o.execTimeAdd
+		d := o.execTimeConfig.ExecTimeAdd
 		o.lock.RUnlock()
 		time.Sleep(d)
 
 		res = num1 + num2
 	} else if o.operator == SUBTRACT {
 		o.lock.RLock()
-		d := o.execTimeSubtract
+		d := o.execTimeConfig.TimeSubtract
 		o.lock.RUnlock()
 		time.Sleep(d)
 
 		res = num1 - num2
 	} else if o.operator == DIVIDE {
 		o.lock.RLock()
-		d := o.execTimeDivide
+		d := o.execTimeConfig.execTimeDivide
 		o.lock.RUnlock()
 		time.Sleep(d)
 
@@ -85,7 +67,7 @@ func (o *Operation) Calculate() (chan int, error) {
 		res = num1 / num2
 	} else if o.operator == MULTIPLY {
 		o.lock.RLock()
-		d := o.execTimeMultiply
+		d := o.execTimeConfig.TimeMultiply
 		o.lock.RUnlock()
 		time.Sleep(d)
 
@@ -101,3 +83,4 @@ func (o *Operation) Calculate() (chan int, error) {
 
 	return chanOut, nil
 }
+*/
