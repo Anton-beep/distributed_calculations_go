@@ -22,7 +22,7 @@ type OperationOrNum struct {
 	OperationId1 int
 	OperationId2 int
 	Operator     int
-	Data         int
+	Data         float64
 }
 
 type ExecTimeConfig struct {
@@ -40,8 +40,8 @@ type ExpressionParser struct {
 	logs            *ExpressionLogger.ExpLogger
 }
 
-func isByteNumber(b byte) bool {
-	if b > []byte("0")[0] && b < []byte("9")[0] {
+func isByteNumberOrPoint(b byte) bool {
+	if (b >= '0' && b <= '9') || b == '.' {
 		return true
 	}
 	return false
@@ -70,13 +70,13 @@ func isOperatorGreater(b1 string, b2 string) bool {
 
 func convertByteToOperator(b byte) (int, error) {
 	switch b {
-	case []byte("+")[0]:
+	case '+':
 		return ADD, nil
-	case []byte("-")[0]:
+	case '-':
 		return SUBTRACT, nil
-	case []byte("*")[0]:
+	case '*':
 		return MULTIPLY, nil
-	case []byte("/")[0]:
+	case '/':
 		return DIVIDE, nil
 	}
 	return 0, errors.New("not an Operator")
@@ -156,7 +156,7 @@ func (e *ExpressionParser) ConvertExpressionInRPN(expression string) ([]string, 
 	switchSign := false
 
 	for i := 0; i < len(expression); i++ {
-		if isByteNumber(expression[i]) {
+		if isByteNumberOrPoint(expression[i]) {
 			lastOper = false
 
 			if lastNum {
@@ -167,7 +167,7 @@ func (e *ExpressionParser) ConvertExpressionInRPN(expression string) ([]string, 
 				bufNum = append(bufNum, '-')
 				switchSign = false
 			}
-			for i < len(expression) && isByteNumber(expression[i]) {
+			for i < len(expression) && isByteNumberOrPoint(expression[i]) {
 				// while a number, push it to the output
 				bufNum = append(bufNum, expression[i])
 				i++
@@ -245,7 +245,7 @@ func (e *ExpressionParser) ReadRPN(expressionRPN []string) ([]OperationOrNum, er
 	id := 0
 
 	for ind, el := range expressionRPN {
-		if val, err := strconv.Atoi(el); err == nil {
+		if val, err := strconv.ParseFloat(el, 64); err == nil {
 			data[id] = OperationOrNum{Data: val}
 			stack = append(stack, id)
 			id++
@@ -277,7 +277,7 @@ func (e *ExpressionParser) ReadRPN(expressionRPN []string) ([]OperationOrNum, er
 	return data, nil
 }
 
-func (e *ExpressionParser) CalculateOperation(num1, num2, operator int) (int, error) {
+func (e *ExpressionParser) CalculateOperation(num1, num2 float64, operator int) (float64, error) {
 	e.mu.Lock()
 	duration, err := e.getTimeForOperator(operator)
 	e.mu.Unlock()
@@ -311,7 +311,7 @@ func (e *ExpressionParser) CalculateOperation(num1, num2, operator int) (int, er
 }
 
 // CalculateRPNData aka workerPool
-func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (int, error) {
+func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, error) {
 	// pool will control number of workers at the same time
 	e.logs.Add("Start of calculations")
 	if e.numberOfWorkers < 1 {
@@ -393,7 +393,7 @@ func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (int, error) 
 	return data[len(data)-1].Data, nil
 }
 
-func (e *ExpressionParser) CalculateExpression(in string) (int, string, error) {
+func (e *ExpressionParser) CalculateExpression(in string) (float64, string, error) {
 	e.logs.Reset()
 	// convert to RPN
 	rpn, err := e.ConvertExpressionInRPN(in)

@@ -26,6 +26,7 @@ func TestConvertToRPN(t *testing.T) {
 		{"operator from stack (o1 is -, o2 is -)", "4 - 3 - 2", []string{"4", "3", "-", "2", "-"}, false},
 		{"without brackets", "2 + 2 + 2 + 2 + 2 + 2", []string{"2", "2", "2", "2", "2", "2", "+", "+", "+", "+", "+"}, false},
 		{"with brackets", "(2 + 2) + (2 + 2) + (2 + 2)", []string{"2", "2", "+", "2", "2", "+", "2", "2", "+", "+", "+"}, false},
+		{"float", "0.2 + 0.2", []string{"0.2", "0.2", "+"}, false},
 	}
 
 	ep := ExpressionParser.NewExpressionParser()
@@ -91,7 +92,7 @@ func TestCalculation(t *testing.T) {
 	type element struct {
 		name      string
 		in        []ExpressionParser.OperationOrNum
-		out       int
+		out       float64
 		wantError bool
 	}
 	tests := []element{
@@ -127,7 +128,7 @@ func TestFullProcess(t *testing.T) {
 
 	type element struct {
 		in        string
-		out       int
+		out       float64
 		wantError bool
 	}
 	tests := []element{
@@ -146,6 +147,7 @@ func TestFullProcess(t *testing.T) {
 		{"1 + (1)", 2, false},
 		{"(2 + 2) + (2 + 2) + (2 + 2)", 12, false},
 		{"2 + 2 + 2 + 2 + 2 + 2 + 2 + 2", 16, false},
+		{"0.1 + 0.9", 1, false},
 	}
 
 	ep := ExpressionParser.NewExpressionParser()
