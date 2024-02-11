@@ -51,16 +51,13 @@ func (a *APIDb) GetExpressionByID(id int) (Expression, error) {
 }
 
 func (a *APIDb) AddExpression(expression Expression) (int, error) {
-	result, err := a.db.Exec("INSERT INTO expressions(value, answer, logs, ready) VALUES($1, $2, $3, $4)",
-		expression.Value, expression.Answer, expression.Logs, expression.Status)
+	var id int
+	err := a.db.QueryRow("INSERT INTO expressions(value, answer, logs, ready) VALUES($1, $2, $3, $4) RETURNING id",
+		expression.Value, expression.Answer, expression.Logs, expression.Status).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return int(id), nil
+	return id, nil
 }
 
 func (a *APIDb) UpdateExpression(expression Expression) error {

@@ -80,3 +80,4 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           working-directory: ./storage
+          args: --config=../.golangci.yml
