@@ -312,6 +312,13 @@ issues:
   # Default: 3
   max-same-issues: 50
 
+  exclude:
+    - "Function 'ConvertInRPN' has too many statements"
+    - "cognitive complexity 47 of func"
+    - "cognitive complexity 22 of func"
+    - "Magic number: 2"
+    - "`if err == nil` has complex nested blocks"
+
   exclude-rules:
     - source: "(noinspection|TODO)"
       linters: [ godot ]

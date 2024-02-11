@@ -1,9 +1,9 @@
-package tests
+package tests_test
 
 import (
-	"calculationServer/pkg/ExpressionParser"
-	"fmt"
+	"calculationServer/pkg/expressionparser"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -25,18 +25,19 @@ func TestConvertToRPN(t *testing.T) {
 		{"operator from stack (o1 is +, o2 is *)", "4 * 3 + 2", []string{"4", "3", "*", "2", "+"}, false},
 		{"operator from stack (o1 is -, o2 is -)", "4 - 3 - 2", []string{"4", "3", "-", "2", "-"}, false},
 		{"without brackets", "2 + 2 + 2 + 2 + 2 + 2", []string{"2", "2", "2", "2", "2", "2", "+", "+", "+", "+", "+"}, false},
-		{"with brackets", "(2 + 2) + (2 + 2) + (2 + 2)", []string{"2", "2", "+", "2", "2", "+", "2", "2", "+", "+", "+"}, false},
+		{"with brackets", "(2 + 2) + (2 + 2) + (2 + 2)",
+			[]string{"2", "2", "+", "2", "2", "+", "2", "2", "+", "+", "+"}, false},
 		{"float", "0.2 + 0.2", []string{"0.2", "0.2", "+"}, false},
 	}
 
-	ep := ExpressionParser.NewExpressionParser()
+	ep := expressionparser.NewExpressionParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := ep.ConvertExpressionInRPN(tt.in)
+			actual, err := ep.ConvertInRPN(tt.in)
 			if tt.wantError {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.out, actual)
 			}
 		})
@@ -47,41 +48,42 @@ func TestReadRPN(t *testing.T) {
 	type element struct {
 		name      string
 		in        []string
-		out       []ExpressionParser.OperationOrNum
+		out       []expressionparser.OperationOrNum
 		wantError bool
 	}
 
 	tests := []element{
-		{name: "simple", in: []string{"3", "4", "+"}, out: []ExpressionParser.OperationOrNum{
-			{false, 0, 0, 0, 3},
-			{false, 0, 0, 0, 4},
-			{true, 0, 1, 0, 0},
+		{name: "simple", in: []string{"3", "4", "+"}, out: []expressionparser.OperationOrNum{
+			{Data: 3},
+			{Data: 4},
+			{IsOperation: true, OperationID2: 1},
 		}},
-		{name: "complicated", in: []string{"3", "4", "2", "*", "1", "5", "-", "/", "+"}, out: []ExpressionParser.OperationOrNum{
-			{false, 0, 0, 0, 3},
-			{false, 0, 0, 0, 4},
-			{false, 0, 0, 0, 2},
-			{true, 1, 2, 3, 0},
-			{false, 0, 0, 0, 1},
-			{false, 0, 0, 0, 5},
-			{true, 4, 5, 1, 0},
-			{true, 3, 6, 2, 0},
-			{true, 0, 7, 0, 0},
-		}},
+		{name: "complicated", in: []string{"3", "4", "2", "*", "1", "5", "-", "/", "+"},
+			out: []expressionparser.OperationOrNum{
+				{Data: 3},
+				{Data: 4},
+				{Data: 2},
+				{IsOperation: true, OperationID1: 1, OperationID2: 2, Operator: 3},
+				{Data: 1},
+				{Data: 5},
+				{IsOperation: true, OperationID1: 4, OperationID2: 5, Operator: 1},
+				{IsOperation: true, OperationID1: 3, OperationID2: 6, Operator: 2},
+				{IsOperation: true, OperationID2: 7},
+			}},
 		{name: "too many operators", in: []string{"1", "2", "+", "+"}, out: nil, wantError: true},
 		{name: "too many numbers", in: []string{"1", "2", "3", "+"}, out: nil, wantError: true},
 		{name: "unexpected symbol", in: []string{"1", "2", "+-"}, out: nil, wantError: true},
 		{name: "unexpected symbol2", in: []string{"1", "2", "&"}, out: nil, wantError: true},
 	}
 
-	ep := ExpressionParser.NewExpressionParser()
+	ep := expressionparser.NewExpressionParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, err := ep.ReadRPN(tt.in)
 			if tt.wantError {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.out, actual)
 			}
 		})
@@ -91,27 +93,27 @@ func TestReadRPN(t *testing.T) {
 func TestCalculation(t *testing.T) {
 	type element struct {
 		name      string
-		in        []ExpressionParser.OperationOrNum
+		in        []expressionparser.OperationOrNum
 		out       float64
 		wantError bool
 	}
 	tests := []element{
-		{"simple", []ExpressionParser.OperationOrNum{
-			{false, 0, 0, 0, 3},
-			{false, 0, 0, 0, 4},
-			{true, 0, 1, 0, 0},
-		}, 7, false},
+		{name: "simple", in: []expressionparser.OperationOrNum{
+			{Data: 3},
+			{Data: 4},
+			{IsOperation: true, OperationID2: 1},
+		}, out: 7},
 	}
 
-	ep := ExpressionParser.NewExpressionParser()
+	ep := expressionparser.NewExpressionParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, err := ep.CalculateRPNData(tt.in)
 			if tt.wantError {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.out, actual)
+				require.NoError(t, err)
+				assert.InDelta(t, tt.out, actual, 0.001)
 			}
 		})
 	}
@@ -119,7 +121,7 @@ func TestCalculation(t *testing.T) {
 
 func TestFullProcess(t *testing.T) {
 	numberOfWorkers := 10
-	timeCfg := ExpressionParser.ExecTimeConfig{
+	timeCfg := expressionparser.ExecTimeConfig{
 		TimeAdd:      50,
 		TimeSubtract: 50,
 		TimeDivide:   50,
@@ -150,21 +152,20 @@ func TestFullProcess(t *testing.T) {
 		{"0.1 + 0.9", 1, false},
 	}
 
-	ep := ExpressionParser.NewExpressionParser()
+	ep := expressionparser.NewExpressionParser()
 	err := ep.SetNumberOfWorkers(numberOfWorkers)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = ep.SetExecTimes(timeCfg)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	for _, tt := range tests {
 		t.Run(tt.in, func(t *testing.T) {
-			actual, logs, err := ep.CalculateExpression(tt.in)
-			fmt.Println(logs)
+			actual, _, err2 := ep.CalculateExpression(tt.in)
 			if tt.wantError {
-				assert.Error(t, err)
+				require.Error(t, err2)
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.out, actual)
+				require.NoError(t, err2)
+				assert.InDelta(t, tt.out, actual, 0.001)
 			}
 		})
 	}

@@ -2,16 +2,30 @@ package main
 
 import (
 	_ "calculationServer/docs"
-	"calculationServer/internal/Api"
+	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
-//	@title			Calculation Server API
-//	@version		1.0
-//	@description	This is a calculation server.
+func InitLogger(debug bool) {
+	cfg := zap.NewDevelopmentConfig()
+	if debug {
+		cfg.Level.SetLevel(zap.DebugLevel)
+	}
+	logger, err := cfg.Build()
+	if err != nil {
+		panic(err)
+	}
 
-// @host		localhost:8080
-// @BasePath	/api/v1
+	zap.ReplaceGlobals(logger)
+	zap.S().Info("Start")
+}
+
 func main() {
-	a := Api.NewApi(STORAGE_URL, SECRET_KEY)
-	a.Start(a.SetupRouter())
+	InitLogger(true)
+
+	// .env
+	err := godotenv.Load()
+	if err != nil {
+		zap.S().Fatal(err)
+	}
 }

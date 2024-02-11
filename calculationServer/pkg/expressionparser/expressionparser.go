@@ -1,7 +1,7 @@
-package ExpressionParser
+package expressionparser
 
 import (
-	"calculationServer/internal/ExpressionLogger"
+	"calculationServer/internal/expressionlogger"
 	"errors"
 	"fmt"
 	"strconv"
@@ -19,8 +19,8 @@ const (
 
 type OperationOrNum struct {
 	IsOperation  bool
-	OperationId1 int
-	OperationId2 int
+	OperationID1 int
+	OperationID2 int
 	Operator     int
 	Data         float64
 }
@@ -36,8 +36,7 @@ type ExpressionParser struct {
 	numberOfWorkers int
 	execTimeConfig  ExecTimeConfig
 	mu              sync.Mutex
-	expression      string
-	logs            *ExpressionLogger.ExpLogger
+	logs            *expressionlogger.ExpLogger
 }
 
 func isByteNumberOrPoint(b byte) bool {
@@ -108,7 +107,7 @@ func IsExecTimeConfigCorrect(execTimeConfig ExecTimeConfig) (bool, error) {
 func NewExpressionParser() *ExpressionParser {
 	return &ExpressionParser{
 		numberOfWorkers: 1,
-		logs:            ExpressionLogger.New(),
+		logs:            expressionlogger.New(),
 	}
 }
 
@@ -143,8 +142,8 @@ func (e *ExpressionParser) SetNumberOfWorkers(in int) error {
 	return nil
 }
 
-// ConvertExpressionInRPN see an animation https://somethingorotherwhatever.com/shunting-yard-animation/
-func (e *ExpressionParser) ConvertExpressionInRPN(expression string) ([]string, error) {
+// ConvertInRPN see an animation https://somethingorotherwhatever.com/shunting-yard-animation/
+func (e *ExpressionParser) ConvertInRPN(expression string) ([]string, error) {
 	e.logs.Add("Start conversion to reversed polish notation")
 
 	stack := make([]string, 0)
@@ -172,6 +171,7 @@ func (e *ExpressionParser) ConvertExpressionInRPN(expression string) ([]string, 
 				bufNum = append(bufNum, expression[i])
 				i++
 			}
+
 			out = append(out, string(bufNum))
 			lastNum = true
 			if i >= len(expression) {
@@ -196,7 +196,8 @@ func (e *ExpressionParser) ConvertExpressionInRPN(expression string) ([]string, 
 			lastNum = false
 
 			if len(stack) > 0 {
-				// While there is an Operator o₂ at the top of the stack with greater precedence, or with equal precedence and o₁ is left associative, push o₂ from the stack to the output
+				// While there is an Operator o₂ at the top of the stack with greater precedence,
+				// or with equal precedence and o₁ is left associative, push o₂ from the stack to the output.
 				for len(stack) > 0 && isOperatorGreater(string(expression[i]), stack[len(stack)-1]) {
 					out = append(out, stack[len(stack)-1])
 					stack = stack[:len(stack)-1]
@@ -238,7 +239,7 @@ func (e *ExpressionParser) ConvertExpressionInRPN(expression string) ([]string, 
 	return out, nil
 }
 
-// ReadRPN read reversed polish notation and convert to slice, ao it can be calculated later
+// ReadRPN read reversed polish notation and convert to slice, ao it can be calculated later.
 func (e *ExpressionParser) ReadRPN(expressionRPN []string) ([]OperationOrNum, error) {
 	stack := make([]int, 0)
 	data := make([]OperationOrNum, len(expressionRPN))
@@ -256,12 +257,12 @@ func (e *ExpressionParser) ReadRPN(expressionRPN []string) ([]OperationOrNum, er
 		}
 		if oper, err := convertByteToOperator(el[0]); err == nil {
 			if len(stack) < 2 {
-				return nil, fmt.Errorf("not enought arguments for Operator, pos: %v", ind)
+				return nil, fmt.Errorf("not enought arguments for Operator, pos: %v (need 2 number for an operator)", ind)
 			}
 			data[id] = OperationOrNum{
 				IsOperation:  true,
-				OperationId1: stack[len(stack)-2],
-				OperationId2: stack[len(stack)-1],
+				OperationID1: stack[len(stack)-2],
+				OperationID2: stack[len(stack)-1],
 				Operator:     oper,
 			}
 			stack = stack[:len(stack)-2]
@@ -310,7 +311,7 @@ func (e *ExpressionParser) CalculateOperation(num1, num2 float64, operator int) 
 	return 0, errors.New("unknown operator")
 }
 
-// CalculateRPNData aka workerPool
+// CalculateRPNData aka workerPool.
 func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, error) {
 	// pool will control number of workers at the same time
 	e.logs.Add("Start of calculations")
@@ -320,7 +321,7 @@ func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, err
 
 	errChan := make(chan error)
 	running := 0
-	readyChan := make(chan bool, e.numberOfWorkers*2)
+	readyChan := make(chan bool, e.numberOfWorkers+1)
 	// to understand, when this goroutine will go through all data elements
 
 	for ind, el := range data {
@@ -328,55 +329,60 @@ func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, err
 		ind := ind
 		if !el.IsOperation {
 			continue
-		} else {
-			for {
-				e.mu.Lock()
-				if !data[el.OperationId1].IsOperation && !data[el.OperationId2].IsOperation && running < e.numberOfWorkers {
-					// we can start new worker
-					e.mu.Unlock()
-					break
-				}
-				e.mu.Unlock()
-				select {
-				case <-readyChan:
-					// wait one worker to be done
-					continue
-				case err := <-errChan:
-					return 0, err
-				}
-			}
-
-			running++
-			go func() {
-				e.mu.Lock()
-				// take numbers from data
-				num1, num2 := data[el.OperationId1].Data, data[el.OperationId2].Data
-				e.mu.Unlock()
-
-				strOper, err := convertOperatorToString(el.Operator)
-				e.logs.Add(fmt.Sprintf("Start worker with id %v; work: %v %v %v", ind, num1, strOper, num2))
-
-				// calculate with delays
-				outOper, err := e.CalculateOperation(num1, num2, el.Operator)
-
-				e.logs.Add(fmt.Sprintf("End of worker with id %v; work was %v %v %v; result is %v", ind, num1, strOper, num2, outOper))
-				// if error, write in a channel
-				if err != nil {
-					errChan <- err
-					return
-				}
-				e.mu.Lock()
-				// write result of an operation
-				data[ind] = OperationOrNum{Data: outOper}
-				e.mu.Unlock()
-
-				e.mu.Lock()
-				running--
-				e.mu.Unlock()
-				// read one element from pool, so new goroutine can turn on
-				readyChan <- true
-			}()
 		}
+		for {
+			e.mu.Lock()
+			if !data[el.OperationID1].IsOperation && !data[el.OperationID2].IsOperation && running < e.numberOfWorkers {
+				// we can start new worker
+				e.mu.Unlock()
+				break
+			}
+			e.mu.Unlock()
+			select {
+			case <-readyChan:
+				// wait one worker to be done
+				continue
+			case err := <-errChan:
+				return 0, err
+			}
+		}
+
+		running++
+		go func() {
+			e.mu.Lock()
+			// take numbers from data
+			num1, num2 := data[el.OperationID1].Data, data[el.OperationID2].Data
+			e.mu.Unlock()
+
+			strOper, err := convertOperatorToString(el.Operator)
+			// if error, write in a channel
+			if err != nil {
+				errChan <- err
+				return
+			}
+			e.logs.Add(fmt.Sprintf("Start worker with id %v; work: %v %v %v", ind, num1, strOper, num2))
+
+			// calculate with delays
+			outOper, err := e.CalculateOperation(num1, num2, el.Operator)
+
+			e.logs.Add(fmt.Sprintf("End of worker with id %v; work was %v %v %v; result is %v",
+				ind, num1, strOper, num2, outOper))
+			// if error, write in a channel
+			if err != nil {
+				errChan <- err
+				return
+			}
+			e.mu.Lock()
+			// write result of an operation
+			data[ind] = OperationOrNum{Data: outOper}
+			e.mu.Unlock()
+
+			e.mu.Lock()
+			running--
+			e.mu.Unlock()
+			// read one element from pool, so new goroutine can turn on
+			readyChan <- true
+		}()
 	}
 
 	for running > 0 {
@@ -396,7 +402,7 @@ func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, err
 func (e *ExpressionParser) CalculateExpression(in string) (float64, string, error) {
 	e.logs.Reset()
 	// convert to RPN
-	rpn, err := e.ConvertExpressionInRPN(in)
+	rpn, err := e.ConvertInRPN(in)
 	if err != nil {
 		return 0, "", err
 	}
