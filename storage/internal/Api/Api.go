@@ -3,39 +3,38 @@ package Api
 import (
 	"github.com/gin-gonic/gin"
 	"storage/internal/Db"
+	"storage/internal/ExpressionStorage"
 )
 
 type Api struct {
-	db          *Db.ApiDb
-	expressions map[int]Db.Expression
+	db             *Db.ApiDb
+	expressions    *ExpressionStorage.ExpressionStorage
+	execTimeConfig ExecTimeConfig
 }
 
 func New(_db *Db.ApiDb) *Api {
-	newApi := &Api{db: _db}
+	newApi := &Api{
+		db:          _db,
+		expressions: ExpressionStorage.New(_db),
+	}
 	return newApi
 }
 
 func (a *Api) Start() *gin.Engine {
 	router := gin.Default()
 
-	//router.GET("/api/ping", a.Pong)
-	//router.POST("/api/register", a.Register)
-	//router.POST("/api/login", a.Login)
-	//
-	//authGroup := router.Group("/api/private")
-	//authGroup.Use(a.AuthMiddleware())
-	//
-	//authGroup.POST("getChats", a.GetUsersChats)
-	//authGroup.POST("getMessagesByChatID", a.GetMessagesByChatID)
-	//authGroup.POST("getInfoUser", a.GetInfoAboutUser)
-	//authGroup.POST("editMessage", a.EditMessage)
-	//authGroup.POST("editStatus", a.EditStatus)
-	//authGroup.POST("createMessage", a.CreateNewMessage)
-	//authGroup.POST("createChat", a.CreateNewChat)
-	//authGroup.POST("getUpdatesMessage", a.GetMessageUpdates)
-	//authGroup.POST("isUserExists", a.IsUserExists)
-	//authGroup.POST("createChatByUsernames", a.CreateChatByUsernames)
-	//authGroup.POST("getInfoChat", a.GetInfoChat)
+	router.GET("/api/v1/ping", a.Ping)
+	// for user
+	router.POST("/api/v1/expression", a.PostExpression)
+	router.GET("/api/v1/expression", a.GetAllExpressions)
+	router.GET("/api/v1/expressionById", a.GetExpressionById)
+	router.POST("/api/v1/postOperationsAndTimes", a.PostOperationsAndTimes)
+	router.GET("/api/v1/getOperationsAndTimes", a.GetOperationsAndTimes)
+
+	// for calculation server
+	router.GET("/api/v1/getUpdates", a.GetUpdates)
+	router.POST("/api/v1/confirmStartCalculating", a.ConfirmStartCalculating)
+	router.POST("/api/v1/postResult", a.PostResult)
 
 	return router
 }

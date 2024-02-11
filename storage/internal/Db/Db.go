@@ -3,8 +3,9 @@ package Db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"log"
+	"go.uber.org/zap"
 	"os"
 )
 
@@ -13,6 +14,11 @@ type ApiDb struct {
 }
 
 func New() (*ApiDb, error) {
+	err := godotenv.Load("../.env")
+	if err != nil {
+		return nil, err
+	}
+
 	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("POSTGRESQL_USER"),
 		os.Getenv("POSTGRESQL_PASSWORD"),
@@ -39,14 +45,14 @@ func (a *ApiDb) ResetDatabase() {
 		return
 	}
 
-	log.Println("!!!RESET DATABASE!!!")
+	zap.S().Warn("resetting database")
 
 	_, err := a.db.Exec("DROP TABLE IF EXISTS expressions")
 	if err != nil {
-		log.Fatalln("error while resetting db: ", err)
+		zap.S().Fatal(err)
 	}
-	_, err = a.db.Exec("CREATE TABLE expressions (id SERIAL PRIMARY KEY, value TEXT, answer INT, logs TEXT, ready bool)")
+	_, err = a.db.Exec("CREATE TABLE expressions (id SERIAL PRIMARY KEY, value TEXT, answer FLOAT, logs TEXT, ready INT)")
 	if err != nil {
-		log.Fatalln("error while resetting db: ", err)
+		zap.S().Fatal(err)
 	}
 }

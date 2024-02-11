@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/joho/godotenv"
-	"log"
+	"go.uber.org/zap"
 	"storage/internal/Db"
 )
 
@@ -11,11 +11,11 @@ func main() {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal(err)
+		zap.S().Fatal(err)
 	}
 
 	_, err = Db.New()
 	if err != nil {
-		return
+		zap.S().Fatal(err)
 	}
 }
