@@ -19,6 +19,7 @@ func New() (*ApiDb, error) {
 		zap.S().Warn(err)
 	}
 
+	fmt.Println(os.Getenv("POSTGRESQL_USER"), os.Getenv("POSTGRESQL_PASSWORD"), os.Getenv("POSTGRESQL_HOST"), os.Getenv("POSTGRESQL_PORT"), os.Getenv("POSTGRESQL_NAME"))
 	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("POSTGRESQL_USER"),
 		os.Getenv("POSTGRESQL_PASSWORD"),

@@ -34,13 +34,14 @@ jobs:
         env:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
-          POSTGRESQL_HOST: postgres
-          POSTGRESQL_PORT: 5432
-          POSTGRES_NAME: postgres
-          RESET_POSTGRESQL: "TRUE"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
+          # Maps tcp port 5432 on service container to the host
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Set up Go
         uses: actions/setup-go@v2
@@ -59,3 +60,10 @@ jobs:
         run: |
           cd storage
           go test -v ./tests/...
+        env:
+          POSTGRESQL_USER: user
+          POSTGRESQL_PASSWORD: password
+          POSTGRESQL_HOST: localhost
+          POSTGRESQL_NAME: postgres
+          RESET_POSTGRESQL: "TRUE"
+          POSTGRESQL_PORT: 5432
