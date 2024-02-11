@@ -16,7 +16,7 @@ type ApiDb struct {
 func New() (*ApiDb, error) {
 	err := godotenv.Load("../.env")
 	if err != nil {
-		return nil, err
+		zap.S().Warn(err)
 	}
 
 	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",

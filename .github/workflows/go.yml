@@ -3,36 +3,62 @@
 
 name: Go
 
-on: [push]
+on: [ push ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
 
-    - name: Build Calculation Server
-      run: |
-        cd calculationServer
-        go build -v .
+      - name: Build Calculation Server
+        run: |
+          cd calculationServer
+          go build -v .
 
-    - name: Build Storage
-      run: |
-        cd storage
-        go build -v .
+      - name: Build Storage
+        run: |
+          cd storage
+          go build -v .
 
-    - name: Test Calculation Server
-      run: |
-        cd calculationServer
-        go test -v ./tests/...
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRESQL_HOST: postgres
+          POSTGRESQL_PORT: 5432
+          POSTGRES_NAME: postgres
+          RESET_POSTGRESQL: "TRUE"
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.21'
 
-    - name: Test Storage
-      run: |
-        cd storage
-        go test -v ./tests/...
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Test Calculation Server
+        run: |
+          cd calculationServer
+          go test -v ./tests/...
+
+      - name: Test Storage
+        run: |
+          cd storage
+          go test -v ./tests/...
