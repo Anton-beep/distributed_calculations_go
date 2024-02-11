@@ -14,12 +14,13 @@ type ApiDb struct {
 }
 
 func New() (*ApiDb, error) {
+	// this is for test purposes
 	err := godotenv.Load("../.env")
 	if err != nil {
 		zap.S().Warn(err)
 	}
 
-	fmt.Println(os.Getenv("POSTGRESQL_USER"), os.Getenv("POSTGRESQL_PASSWORD"), os.Getenv("POSTGRESQL_HOST"), os.Getenv("POSTGRESQL_PORT"), os.Getenv("POSTGRESQL_NAME"))
+	//zap.S().Info(os.Getenv("POSTGRESQL_USER"), os.Getenv("POSTGRESQL_PASSWORD"), os.Getenv("POSTGRESQL_HOST"), os.Getenv("POSTGRESQL_PORT"), os.Getenv("POSTGRESQL_NAME"))
 	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("POSTGRESQL_USER"),
 		os.Getenv("POSTGRESQL_PASSWORD"),
@@ -31,12 +32,14 @@ func New() (*ApiDb, error) {
 		return nil, err
 	}
 
+	// check connection
 	err = db.Ping()
 	if err != nil {
 		return nil, err
 	}
 
 	a := &ApiDb{db}
+	// database will be wiped if in .env variable RESET_POSTGRESQL = TRUE
 	a.ResetDatabase()
 	return a, nil
 }

@@ -12,6 +12,15 @@ type OutPing struct {
 	Message string `json:"message"`
 }
 
+// Ping godoc
+//
+//	@Summary		Ping
+//	@Description	Check connection with server
+//	@Tags			ping
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	OutPing
+//	@Router			/ping [get]
 func (a *Api) Ping(c *gin.Context) {
 	c.JSON(http.StatusOK, OutPing{Message: "pong"})
 }
@@ -27,6 +36,17 @@ type OutPostExpression struct {
 	Message string `json:"message"`
 }
 
+// PostExpression godoc
+//
+//	@Summary		Add expression
+//	@Description	Add expression to storage
+//	@Tags			expression
+//	@Accept			json
+//	@Produce		json
+//	@Param			expression	body		InPostExpression	true	"Expression"
+//	@Success		200			{object}	OutPostExpression
+//	@Failure		400			{object}	OutPostExpression
+//	@Router			/expression [post]
 func (a *Api) PostExpression(c *gin.Context) {
 	var in InPostExpression
 	var out OutPostExpression
@@ -63,6 +83,15 @@ type OutGetAllExpressions struct {
 	Message     string          `json:"message"`
 }
 
+// GetAllExpressions godoc
+//
+//	@Summary		Get all expressions
+//	@Description	Get all expressions from storage
+//	@Tags			expression
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	OutGetAllExpressions
+//	@Router			/expression [get]
 func (a *Api) GetAllExpressions(c *gin.Context) {
 	expressions := a.expressions.GetAll()
 	c.JSON(http.StatusOK, OutGetAllExpressions{Expressions: expressions, Message: "ok"})
@@ -77,6 +106,18 @@ type OutGetExpressionById struct {
 	Message    string        `json:"message"`
 }
 
+// GetExpressionById godoc
+//
+//	@Summary		Get expression by id
+//	@Description	Get expression from storage by id
+//	@Tags			expression
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	body		InGetExpressionById	true	"Expression ID"
+//	@Success		200	{object}	OutGetExpressionById
+//	@Failure		400	{object}	OutGetExpressionById
+//	@Failure		500	{object}	OutGetExpressionById
+//	@Router			/expressionById [get]
 func (a *Api) GetExpressionById(c *gin.Context) {
 	var in InGetExpressionById
 	var out OutGetExpressionById
@@ -88,6 +129,7 @@ func (a *Api) GetExpressionById(c *gin.Context) {
 		return
 	}
 
+	// get expression from storage
 	expression, err := a.expressions.GetById(in.Id)
 	if err != nil {
 		out.Expression = Db.Expression{}
@@ -114,6 +156,16 @@ type OutGetOperationsAndTimes struct {
 	Message string         `json:"message"`
 }
 
+// GetOperationsAndTimes godoc
+//
+//	@Summary		Get operations and times
+//	@Description	Get operations and times for calculation as a map of operation and time in milliseconds, {"+": 100,...}
+//	@Tags			operations
+//	@Accept			json
+//	@Produce		json
+//	@Param			map[string]int	true		"Operations and times"
+//	@Success		200				{object}	OutGetOperationsAndTimes
+//	@Router			/getOperationsAndTimes [get]
 func (a *Api) GetOperationsAndTimes(c *gin.Context) {
 	outMap := make(map[string]int)
 	outMap["+"] = int(a.execTimeConfig.TimeAdd.Milliseconds())
@@ -127,6 +179,17 @@ type OutSetOperationsAndTimes struct {
 	Message string `json:"message"`
 }
 
+// PostOperationsAndTimes godoc
+//
+//	@Summary		Set operations and times
+//	@Description	Set operations and times for calculation as a map of operation and time in milliseconds, {"+": 100,...}
+//	@Tags			operations
+//	@Accept			json
+//	@Produce		json
+//	@Param			data	body		map[string]int	true	"Operations and times"
+//	@Success		200		{object}	OutSetOperationsAndTimes
+//	@Failure		400		{object}	OutSetOperationsAndTimes
+//	@Router			/postOperationsAndTimes [post]
 func (a *Api) PostOperationsAndTimes(c *gin.Context) {
 	var in map[string]int
 
@@ -166,6 +229,15 @@ type OutGetUpdates struct {
 	Message     string          `json:"message"`
 }
 
+// GetUpdates godoc
+//
+//	@Summary		Get updates
+//	@Description	Get not working expressions for calculation server
+//	@Tags			updates (used by calculation server)
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	OutGetUpdates
+//	@Router			/getUpdates [get]
 func (a *Api) GetUpdates(c *gin.Context) {
 	expressions := a.expressions.GetNotWorkingExpressions()
 	out := OutGetUpdates{Expressions: expressions, Message: "ok"}
@@ -181,6 +253,18 @@ type OutConfirmStartOfCalculating struct {
 	Message string `json:"message"`
 }
 
+// ConfirmStartCalculating godoc
+//
+//	@Summary		Confirm start calculating
+//	@Description	Confirm start calculating for expression to coordinate work of calculation servers
+//	@Tags			updates (used by calculation server)
+//	@Accept			json
+//	@Produce		json
+//	@Param			expression	body		InConfirmStartOfCalculating	true	"Expression"
+//	@Success		200			{object}	OutConfirmStartOfCalculating
+//	@Failure		400			{object}	OutConfirmStartOfCalculating
+//	@Failure		500			{object}	OutConfirmStartOfCalculating
+//	@Router			/confirmStartCalculating [post]
 func (a *Api) ConfirmStartCalculating(c *gin.Context) {
 	var in InConfirmStartOfCalculating
 	var out OutConfirmStartOfCalculating
@@ -207,7 +291,7 @@ func (a *Api) ConfirmStartCalculating(c *gin.Context) {
 		return
 	}
 
-	// move to working
+	// change to working
 	in.Expression.Status = Db.ExpressionWorking
 	if err := a.expressions.UpdatePendingExpression(in.Expression); err != nil {
 		out.Confirm = false
@@ -228,6 +312,18 @@ type OutPostResult struct {
 	Message string `json:"message"`
 }
 
+// PostResult godoc
+//
+//	@Summary		Post result
+//	@Description	Post result of the calculation
+//	@Tags			updates (used by calculation server)
+//	@Accept			json
+//	@Produce		json
+//	@Param			expression	body		InPostResult	true	"Expression"
+//	@Success		200			{object}	OutPostResult
+//	@Failure		400			{object}	OutPostResult
+//	@Failure		500			{object}	OutPostResult
+//	@Router			/postResult [post]
 func (a *Api) PostResult(c *gin.Context) {
 	var in InPostResult
 	var out OutPostResult
@@ -252,7 +348,7 @@ func (a *Api) PostResult(c *gin.Context) {
 		return
 	}
 
-	// move to ready
+	// change to ready
 	in.Expression.Status = Db.ExpressionReady
 	if err := a.expressions.PendingToReady(in.Expression); err != nil {
 		out.Message = err.Error()

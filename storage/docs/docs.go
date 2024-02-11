@@ -14,17 +14,498 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/confirmStartCalculating": {
+            "post": {
+                "description": "Confirm start calculating for expression to coordinate work of calculation servers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "updates (used by calculation server)"
+                ],
+                "summary": "Confirm start calculating",
+                "parameters": [
+                    {
+                        "description": "Expression",
+                        "name": "expression",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Api.InConfirmStartOfCalculating"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutConfirmStartOfCalculating"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutConfirmStartOfCalculating"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutConfirmStartOfCalculating"
+                        }
+                    }
+                }
+            }
+        },
+        "/expression": {
+            "get": {
+                "description": "Get all expressions from storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expression"
+                ],
+                "summary": "Get all expressions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutGetAllExpressions"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Add expression to storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expression"
+                ],
+                "summary": "Add expression",
+                "parameters": [
+                    {
+                        "description": "Expression",
+                        "name": "expression",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Api.InPostExpression"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutPostExpression"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutPostExpression"
+                        }
+                    }
+                }
+            }
+        },
+        "/expressionById": {
+            "get": {
+                "description": "Get expression from storage by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expression"
+                ],
+                "summary": "Get expression by id",
+                "parameters": [
+                    {
+                        "description": "Expression ID",
+                        "name": "id",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Api.InGetExpressionById"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutGetExpressionById"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutGetExpressionById"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutGetExpressionById"
+                        }
+                    }
+                }
+            }
+        },
+        "/getOperationsAndTimes": {
+            "get": {
+                "description": "Get operations and times for calculation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "operations"
+                ],
+                "summary": "Get operations and times",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutGetOperationsAndTimes"
+                        }
+                    }
+                }
+            }
+        },
+        "/getUpdates": {
+            "get": {
+                "description": "Get not working expressions for calculation server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "updates (used by calculation server)"
+                ],
+                "summary": "Get updates",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutGetUpdates"
+                        }
+                    }
+                }
+            }
+        },
+        "/ping": {
+            "get": {
+                "description": "Check connection with server",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ping"
+                ],
+                "summary": "Ping",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutPing"
+                        }
+                    }
+                }
+            }
+        },
+        "/postOperationsAndTimes": {
+            "post": {
+                "description": "Set operations and times for calculation",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "operations"
+                ],
+                "summary": "Set operations and times",
+                "parameters": [
+                    {
+                        "description": "Operations and times",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutSetOperationsAndTimes"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutSetOperationsAndTimes"
+                        }
+                    }
+                }
+            }
+        },
+        "/postResult": {
+            "post": {
+                "description": "Post result of calculation for expression",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "updates (used by calculation server)"
+                ],
+                "summary": "Post result",
+                "parameters": [
+                    {
+                        "description": "Expression",
+                        "name": "expression",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Api.InPostResult"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutPostResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutPostResult"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/Api.OutPostResult"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Api.InConfirmStartOfCalculating": {
+            "type": "object",
+            "required": [
+                "expression"
+            ],
+            "properties": {
+                "expression": {
+                    "$ref": "#/definitions/Db.Expression"
+                }
+            }
+        },
+        "Api.InGetExpressionById": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Api.InPostExpression": {
+            "type": "object",
+            "required": [
+                "expression"
+            ],
+            "properties": {
+                "expression": {
+                    "type": "string"
+                }
+            }
+        },
+        "Api.InPostResult": {
+            "type": "object",
+            "required": [
+                "expression"
+            ],
+            "properties": {
+                "expression": {
+                    "$ref": "#/definitions/Db.Expression"
+                }
+            }
+        },
+        "Api.OutConfirmStartOfCalculating": {
+            "type": "object",
+            "properties": {
+                "confirm": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Api.OutGetAllExpressions": {
+            "type": "object",
+            "properties": {
+                "expressions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Db.Expression"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Api.OutGetExpressionById": {
+            "type": "object",
+            "properties": {
+                "expression": {
+                    "$ref": "#/definitions/Db.Expression"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Api.OutGetOperationsAndTimes": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Api.OutGetUpdates": {
+            "type": "object",
+            "required": [
+                "tasks"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "tasks": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Db.Expression"
+                    }
+                }
+            }
+        },
+        "Api.OutPing": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Api.OutPostExpression": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Api.OutPostResult": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Api.OutSetOperationsAndTimes": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Db.Expression": {
+            "type": "object",
+            "properties": {
+                "answer": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logs": {
+                    "type": "string"
+                },
+                "ready": {
+                    "description": "0 - not ready, 1 - working, 2 - ready",
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "localhost:8080",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Swagger Storage API",
+	Description:      "This is a server for the storage of expressions and their results",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

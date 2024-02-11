@@ -2,6 +2,8 @@ package Api
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"storage/internal/Db"
 	"storage/internal/ExpressionStorage"
 )
@@ -24,6 +26,7 @@ func (a *Api) Start() *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/api/v1/ping", a.Ping)
+
 	// for user
 	router.POST("/api/v1/expression", a.PostExpression)
 	router.GET("/api/v1/expression", a.GetAllExpressions)
@@ -35,6 +38,8 @@ func (a *Api) Start() *gin.Engine {
 	router.GET("/api/v1/getUpdates", a.GetUpdates)
 	router.POST("/api/v1/confirmStartCalculating", a.ConfirmStartCalculating)
 	router.POST("/api/v1/postResult", a.PostResult)
+
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return router
 }

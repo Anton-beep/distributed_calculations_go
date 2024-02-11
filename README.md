@@ -44,7 +44,7 @@ cd storage
 swag fmt
 swag init
 ````
-Documentation is available at http://localhost:8080/swagger/index.html
+Documentation is always available (without rebuild of the documentation) available at http://localhost:8080/swagger/index.html
 
 # Tests And Benchmarks
 For storage testing database is required (see **Database Start** section), also do not forget to change `calculationServer/tests/config_test.go` and `storage/tests/config_test.go` to specify where is postgresql database, number of calculators, and secret key.\

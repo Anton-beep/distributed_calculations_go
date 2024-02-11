@@ -8,8 +8,8 @@ import (
 )
 
 type ExpressionStorage struct {
-	readyExpressions   sync.Map
-	pendingExpressions sync.Map
+	readyExpressions   sync.Map // calculated and ready to return expressions
+	pendingExpressions sync.Map // expressions that are not ready yet and need to be calculated
 	db                 *Db.ApiDb
 }
 
@@ -18,7 +18,7 @@ func New(db *Db.ApiDb) *ExpressionStorage {
 		db: db,
 	}
 
-	// check saved data in database
+	// check saved data in database and uploads it to memory
 	expressions, err := db.GetAllExpressions()
 	if err != nil {
 		zap.S().Error(err)
@@ -69,6 +69,7 @@ func (e *ExpressionStorage) GetById(id int) (Db.Expression, error) {
 	return Db.Expression{}, errors.New("expression is not found")
 }
 
+// GetNotWorkingExpressions returns all expressions that have Status == ExpressionNotReady
 func (e *ExpressionStorage) GetNotWorkingExpressions() []Db.Expression {
 	expressions := make([]Db.Expression, 0)
 	e.pendingExpressions.Range(func(key, value interface{}) bool {
@@ -80,6 +81,7 @@ func (e *ExpressionStorage) GetNotWorkingExpressions() []Db.Expression {
 	return expressions
 }
 
+// UpdatePendingExpression updates expression in pendingExpressions and sync with database
 func (e *ExpressionStorage) UpdatePendingExpression(expression Db.Expression) error {
 	if _, ok := e.pendingExpressions.Load(expression.Id); !ok {
 		return errors.New("expression is not found")
@@ -92,6 +94,7 @@ func (e *ExpressionStorage) UpdatePendingExpression(expression Db.Expression) er
 	return nil
 }
 
+// PendingToReady changes expression from pendingExpressions to readyExpressions and sync with database
 func (e *ExpressionStorage) PendingToReady(expression Db.Expression) error {
 	if expression.Status != Db.ExpressionReady {
 		return errors.New("expression is not ready")
@@ -109,6 +112,7 @@ func (e *ExpressionStorage) PendingToReady(expression Db.Expression) error {
 	return nil
 }
 
+// IsExpressionWorking returns true if expression is in pendingExpressions and has Status == ExpressionWorking
 func (e *ExpressionStorage) IsExpressionWorking(id int) (bool, error) {
 	if expression, ok := e.pendingExpressions.Load(id); ok {
 		return expression.(Db.Expression).Status == Db.ExpressionWorking, nil
@@ -116,6 +120,7 @@ func (e *ExpressionStorage) IsExpressionWorking(id int) (bool, error) {
 	return false, errors.New("expression is not found")
 }
 
+// IsExpressionNotReady returns true if expression is in pendingExpressions and has Status == ExpressionNotReady
 func (e *ExpressionStorage) IsExpressionNotReady(id int) (bool, error) {
 	if expression, ok := e.pendingExpressions.Load(id); ok {
 		return expression.(Db.Expression).Status == Db.ExpressionNotReady, nil

@@ -1,4 +1,321 @@
+basePath: /api/v1
+definitions:
+  Api.InConfirmStartOfCalculating:
+    properties:
+      expression:
+        $ref: '#/definitions/Db.Expression'
+    required:
+    - expression
+    type: object
+  Api.InGetExpressionById:
+    properties:
+      id:
+        type: integer
+    required:
+    - id
+    type: object
+  Api.InPostExpression:
+    properties:
+      expression:
+        type: string
+    required:
+    - expression
+    type: object
+  Api.InPostResult:
+    properties:
+      expression:
+        $ref: '#/definitions/Db.Expression'
+    required:
+    - expression
+    type: object
+  Api.OutConfirmStartOfCalculating:
+    properties:
+      confirm:
+        type: boolean
+      message:
+        type: string
+    type: object
+  Api.OutGetAllExpressions:
+    properties:
+      expressions:
+        items:
+          $ref: '#/definitions/Db.Expression'
+        type: array
+      message:
+        type: string
+    type: object
+  Api.OutGetExpressionById:
+    properties:
+      expression:
+        $ref: '#/definitions/Db.Expression'
+      message:
+        type: string
+    type: object
+  Api.OutGetOperationsAndTimes:
+    properties:
+      data:
+        additionalProperties:
+          type: integer
+        type: object
+      message:
+        type: string
+    type: object
+  Api.OutGetUpdates:
+    properties:
+      message:
+        type: string
+      tasks:
+        items:
+          $ref: '#/definitions/Db.Expression'
+        type: array
+    required:
+    - tasks
+    type: object
+  Api.OutPing:
+    properties:
+      message:
+        type: string
+    type: object
+  Api.OutPostExpression:
+    properties:
+      id:
+        type: integer
+      message:
+        type: string
+    type: object
+  Api.OutPostResult:
+    properties:
+      message:
+        type: string
+    type: object
+  Api.OutSetOperationsAndTimes:
+    properties:
+      message:
+        type: string
+    type: object
+  Db.Expression:
+    properties:
+      answer:
+        type: number
+      id:
+        type: integer
+      logs:
+        type: string
+      ready:
+        description: 0 - not ready, 1 - working, 2 - ready
+        type: integer
+      value:
+        type: string
+    type: object
+host: localhost:8080
 info:
   contact: {}
-paths: {}
+  description: This is a server for the storage of expressions and their results
+  title: Swagger Storage API
+  version: "1.0"
+paths:
+  /confirmStartCalculating:
+    post:
+      consumes:
+      - application/json
+      description: Confirm start calculating for expression to coordinate work of
+        calculation servers
+      parameters:
+      - description: Expression
+        in: body
+        name: expression
+        required: true
+        schema:
+          $ref: '#/definitions/Api.InConfirmStartOfCalculating'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutConfirmStartOfCalculating'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Api.OutConfirmStartOfCalculating'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Api.OutConfirmStartOfCalculating'
+      summary: Confirm start calculating
+      tags:
+      - updates (used by calculation server)
+  /expression:
+    get:
+      consumes:
+      - application/json
+      description: Get all expressions from storage
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutGetAllExpressions'
+      summary: Get all expressions
+      tags:
+      - expression
+    post:
+      consumes:
+      - application/json
+      description: Add expression to storage
+      parameters:
+      - description: Expression
+        in: body
+        name: expression
+        required: true
+        schema:
+          $ref: '#/definitions/Api.InPostExpression'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutPostExpression'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Api.OutPostExpression'
+      summary: Add expression
+      tags:
+      - expression
+  /expressionById:
+    get:
+      consumes:
+      - application/json
+      description: Get expression from storage by id
+      parameters:
+      - description: Expression ID
+        in: body
+        name: id
+        required: true
+        schema:
+          $ref: '#/definitions/Api.InGetExpressionById'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutGetExpressionById'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Api.OutGetExpressionById'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Api.OutGetExpressionById'
+      summary: Get expression by id
+      tags:
+      - expression
+  /getOperationsAndTimes:
+    get:
+      consumes:
+      - application/json
+      description: Get operations and times for calculation
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutGetOperationsAndTimes'
+      summary: Get operations and times
+      tags:
+      - operations
+  /getUpdates:
+    get:
+      consumes:
+      - application/json
+      description: Get not working expressions for calculation server
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutGetUpdates'
+      summary: Get updates
+      tags:
+      - updates (used by calculation server)
+  /ping:
+    get:
+      consumes:
+      - application/json
+      description: Check connection with server
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutPing'
+      summary: Ping
+      tags:
+      - ping
+  /postOperationsAndTimes:
+    post:
+      consumes:
+      - application/json
+      description: Set operations and times for calculation
+      parameters:
+      - description: Operations and times
+        in: body
+        name: data
+        required: true
+        schema:
+          additionalProperties:
+            type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutSetOperationsAndTimes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Api.OutSetOperationsAndTimes'
+      summary: Set operations and times
+      tags:
+      - operations
+  /postResult:
+    post:
+      consumes:
+      - application/json
+      description: Post result of calculation for expression
+      parameters:
+      - description: Expression
+        in: body
+        name: expression
+        required: true
+        schema:
+          $ref: '#/definitions/Api.InPostResult'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Api.OutPostResult'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/Api.OutPostResult'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/Api.OutPostResult'
+      summary: Post result
+      tags:
+      - updates (used by calculation server)
 swagger: "2.0"
