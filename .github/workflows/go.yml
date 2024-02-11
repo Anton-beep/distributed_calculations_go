@@ -67,3 +67,16 @@ jobs:
           POSTGRESQL_NAME: postgres
           RESET_POSTGRESQL: "TRUE"
           POSTGRESQL_PORT: 5432
+
+  golangci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          cache: false
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          working-directory: ./storage
