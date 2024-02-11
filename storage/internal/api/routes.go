@@ -1,10 +1,10 @@
-package Api
+package api
 
 import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
-	"storage/internal/Db"
+	"storage/internal/db"
 	"time"
 )
 
@@ -21,7 +21,7 @@ type OutPing struct {
 //	@Produce		json
 //	@Success		200	{object}	OutPing
 //	@Router			/ping [get]
-func (a *Api) Ping(c *gin.Context) {
+func (a *API) Ping(c *gin.Context) {
 	c.JSON(http.StatusOK, OutPing{Message: "pong"})
 }
 
@@ -32,7 +32,7 @@ type InPostExpression struct {
 }
 
 type OutPostExpression struct {
-	Id      int    `json:"id"`
+	ID      int    `json:"id"`
 	Message string `json:"message"`
 }
 
@@ -47,7 +47,7 @@ type OutPostExpression struct {
 //	@Success		200			{object}	OutPostExpression
 //	@Failure		400			{object}	OutPostExpression
 //	@Router			/expression [post]
-func (a *Api) PostExpression(c *gin.Context) {
+func (a *API) PostExpression(c *gin.Context) {
 	var in InPostExpression
 	var out OutPostExpression
 	if err := c.ShouldBindJSON(&in); err != nil {
@@ -58,14 +58,14 @@ func (a *Api) PostExpression(c *gin.Context) {
 	}
 
 	// add expression to storage
-	newExpression := Db.Expression{
-		Id:     0,
+	newExpression := db.Expression{
+		ID:     0,
 		Value:  in.Expression,
 		Answer: 0,
 		Logs:   "",
-		Status: Db.ExpressionNotReady,
+		Status: db.ExpressionNotReady,
 	}
-	newId, err := a.expressions.Add(newExpression)
+	newID, err := a.expressions.Add(newExpression)
 	if err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
@@ -73,13 +73,13 @@ func (a *Api) PostExpression(c *gin.Context) {
 		return
 	}
 
-	out.Id = newId
+	out.ID = newID
 	out.Message = "ok"
 	c.JSON(http.StatusOK, out)
 }
 
 type OutGetAllExpressions struct {
-	Expressions []Db.Expression `json:"expressions"`
+	Expressions []db.Expression `json:"expressions"`
 	Message     string          `json:"message"`
 }
 
@@ -92,37 +92,37 @@ type OutGetAllExpressions struct {
 //	@Produce		json
 //	@Success		200	{object}	OutGetAllExpressions
 //	@Router			/expression [get]
-func (a *Api) GetAllExpressions(c *gin.Context) {
+func (a *API) GetAllExpressions(c *gin.Context) {
 	expressions := a.expressions.GetAll()
 	c.JSON(http.StatusOK, OutGetAllExpressions{Expressions: expressions, Message: "ok"})
 }
 
-type InGetExpressionById struct {
-	Id int `json:"id" binding:"required"`
+type InGetExpressionByID struct {
+	ID int `json:"id" binding:"required"`
 }
 
-type OutGetExpressionById struct {
-	Expression Db.Expression `json:"expression"`
+type OutGetExpressionByID struct {
+	Expression db.Expression `json:"expression"`
 	Message    string        `json:"message"`
 }
 
-// GetExpressionById godoc
+// GetExpressionByID godoc
 //
 //	@Summary		Get expression by id
 //	@Description	Get expression from storage by id
 //	@Tags			expression
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	body		InGetExpressionById	true	"Expression ID"
-//	@Success		200	{object}	OutGetExpressionById
-//	@Failure		400	{object}	OutGetExpressionById
-//	@Failure		500	{object}	OutGetExpressionById
+//	@Param			id	body		InGetExpressionByID	true	"Expression ID"
+//	@Success		200	{object}	OutGetExpressionByID
+//	@Failure		400	{object}	OutGetExpressionByID
+//	@Failure		500	{object}	OutGetExpressionByID
 //	@Router			/expressionById [get]
-func (a *Api) GetExpressionById(c *gin.Context) {
-	var in InGetExpressionById
-	var out OutGetExpressionById
+func (a *API) GetExpressionByID(c *gin.Context) {
+	var in InGetExpressionByID
+	var out OutGetExpressionByID
 	if err := c.ShouldBindJSON(&in); err != nil {
-		out.Expression = Db.Expression{}
+		out.Expression = db.Expression{}
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusBadRequest, out)
@@ -130,9 +130,9 @@ func (a *Api) GetExpressionById(c *gin.Context) {
 	}
 
 	// get expression from storage
-	expression, err := a.expressions.GetById(in.Id)
+	expression, err := a.expressions.GetByID(in.ID)
 	if err != nil {
-		out.Expression = Db.Expression{}
+		out.Expression = db.Expression{}
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusInternalServerError, out)
@@ -166,7 +166,7 @@ type OutGetOperationsAndTimes struct {
 //	@Param			map[string]int	true		"Operations and times"
 //	@Success		200				{object}	OutGetOperationsAndTimes
 //	@Router			/getOperationsAndTimes [get]
-func (a *Api) GetOperationsAndTimes(c *gin.Context) {
+func (a *API) GetOperationsAndTimes(c *gin.Context) {
 	outMap := make(map[string]int)
 	outMap["+"] = int(a.execTimeConfig.TimeAdd.Milliseconds())
 	outMap["-"] = int(a.execTimeConfig.TimeSubtract.Milliseconds())
@@ -190,7 +190,7 @@ type OutSetOperationsAndTimes struct {
 //	@Success		200		{object}	OutSetOperationsAndTimes
 //	@Failure		400		{object}	OutSetOperationsAndTimes
 //	@Router			/postOperationsAndTimes [post]
-func (a *Api) PostOperationsAndTimes(c *gin.Context) {
+func (a *API) PostOperationsAndTimes(c *gin.Context) {
 	var in map[string]int
 
 	if err := c.ShouldBindJSON(&in); err != nil {
@@ -225,7 +225,7 @@ func (a *Api) PostOperationsAndTimes(c *gin.Context) {
 // for calculation server
 
 type OutGetUpdates struct {
-	Expressions []Db.Expression `json:"tasks" binding:"required"`
+	Expressions []db.Expression `json:"tasks" binding:"required"`
 	Message     string          `json:"message"`
 }
 
@@ -238,14 +238,14 @@ type OutGetUpdates struct {
 //	@Produce		json
 //	@Success		200	{object}	OutGetUpdates
 //	@Router			/getUpdates [get]
-func (a *Api) GetUpdates(c *gin.Context) {
+func (a *API) GetUpdates(c *gin.Context) {
 	expressions := a.expressions.GetNotWorkingExpressions()
 	out := OutGetUpdates{Expressions: expressions, Message: "ok"}
 	c.JSON(http.StatusOK, out)
 }
 
 type InConfirmStartOfCalculating struct {
-	Expression Db.Expression `json:"expression" binding:"required"`
+	Expression db.Expression `json:"expression" binding:"required"`
 }
 
 type OutConfirmStartOfCalculating struct {
@@ -265,7 +265,7 @@ type OutConfirmStartOfCalculating struct {
 //	@Failure		400			{object}	OutConfirmStartOfCalculating
 //	@Failure		500			{object}	OutConfirmStartOfCalculating
 //	@Router			/confirmStartCalculating [post]
-func (a *Api) ConfirmStartCalculating(c *gin.Context) {
+func (a *API) ConfirmStartCalculating(c *gin.Context) {
 	var in InConfirmStartOfCalculating
 	var out OutConfirmStartOfCalculating
 	if err := c.ShouldBindJSON(&in); err != nil {
@@ -277,7 +277,7 @@ func (a *Api) ConfirmStartCalculating(c *gin.Context) {
 	}
 
 	// check if expression is not ready
-	ok, err := a.expressions.IsExpressionNotReady(in.Expression.Id)
+	ok, err := a.expressions.IsExpressionNotReady(in.Expression.ID)
 	if err != nil {
 		out.Confirm = false
 		out.Message = err.Error()
@@ -292,8 +292,8 @@ func (a *Api) ConfirmStartCalculating(c *gin.Context) {
 	}
 
 	// change to working
-	in.Expression.Status = Db.ExpressionWorking
-	if err := a.expressions.UpdatePendingExpression(in.Expression); err != nil {
+	in.Expression.Status = db.ExpressionWorking
+	if err = a.expressions.UpdatePendingExpression(in.Expression); err != nil {
 		out.Confirm = false
 		c.JSON(http.StatusInternalServerError, out)
 		return
@@ -305,7 +305,7 @@ func (a *Api) ConfirmStartCalculating(c *gin.Context) {
 }
 
 type InPostResult struct {
-	Expression Db.Expression `json:"expression" binding:"required"`
+	Expression db.Expression `json:"expression" binding:"required"`
 }
 
 type OutPostResult struct {
@@ -324,7 +324,7 @@ type OutPostResult struct {
 //	@Failure		400			{object}	OutPostResult
 //	@Failure		500			{object}	OutPostResult
 //	@Router			/postResult [post]
-func (a *Api) PostResult(c *gin.Context) {
+func (a *API) PostResult(c *gin.Context) {
 	var in InPostResult
 	var out OutPostResult
 	if err := c.ShouldBindJSON(&in); err != nil {
@@ -335,7 +335,7 @@ func (a *Api) PostResult(c *gin.Context) {
 	}
 
 	// check if expression is in working
-	ok, err := a.expressions.IsExpressionWorking(in.Expression.Id)
+	ok, err := a.expressions.IsExpressionWorking(in.Expression.ID)
 	if err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
@@ -349,8 +349,8 @@ func (a *Api) PostResult(c *gin.Context) {
 	}
 
 	// change to ready
-	in.Expression.Status = Db.ExpressionReady
-	if err := a.expressions.PendingToReady(in.Expression); err != nil {
+	in.Expression.Status = db.ExpressionReady
+	if err = a.expressions.PendingToReady(in.Expression); err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusInternalServerError, out)

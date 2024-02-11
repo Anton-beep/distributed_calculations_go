@@ -1,26 +1,26 @@
-package Db
+package db
 
 import (
 	"database/sql"
 	"fmt"
 	"github.com/joho/godotenv"
+	// postgresql driver.
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"os"
 )
 
-type ApiDb struct {
+type APIDb struct {
 	db *sql.DB
 }
 
-func New() (*ApiDb, error) {
+func New() (*APIDb, error) {
 	// this is for test purposes
 	err := godotenv.Load("../.env")
 	if err != nil {
 		zap.S().Warn(err)
 	}
 
-	//zap.S().Info(os.Getenv("POSTGRESQL_USER"), os.Getenv("POSTGRESQL_PASSWORD"), os.Getenv("POSTGRESQL_HOST"), os.Getenv("POSTGRESQL_PORT"), os.Getenv("POSTGRESQL_NAME"))
 	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("POSTGRESQL_USER"),
 		os.Getenv("POSTGRESQL_PASSWORD"),
@@ -38,13 +38,13 @@ func New() (*ApiDb, error) {
 		return nil, err
 	}
 
-	a := &ApiDb{db}
+	a := &APIDb{db}
 	// database will be wiped if in .env variable RESET_POSTGRESQL = TRUE
 	a.ResetDatabase()
 	return a, nil
 }
 
-func (a *ApiDb) ResetDatabase() {
+func (a *APIDb) ResetDatabase() {
 	if os.Getenv("RESET_POSTGRESQL") != "TRUE" {
 		return
 	}

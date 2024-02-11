@@ -1,28 +1,28 @@
-package Api
+package api
 
 import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"storage/internal/Db"
-	"storage/internal/ExpressionStorage"
+	"storage/internal/db"
+	"storage/internal/expressionstorage"
 )
 
-type Api struct {
-	db             *Db.ApiDb
-	expressions    *ExpressionStorage.ExpressionStorage
+type API struct {
+	db             *db.APIDb
+	expressions    *expressionstorage.ExpressionStorage
 	execTimeConfig ExecTimeConfig
 }
 
-func New(_db *Db.ApiDb) *Api {
-	newApi := &Api{
+func New(_db *db.APIDb) *API {
+	newAPI := &API{
 		db:          _db,
-		expressions: ExpressionStorage.New(_db),
+		expressions: expressionstorage.New(_db),
 	}
-	return newApi
+	return newAPI
 }
 
-func (a *Api) Start() *gin.Engine {
+func (a *API) Start() *gin.Engine {
 	router := gin.Default()
 
 	router.GET("/api/v1/ping", a.Ping)
@@ -30,7 +30,7 @@ func (a *Api) Start() *gin.Engine {
 	// for user
 	router.POST("/api/v1/expression", a.PostExpression)
 	router.GET("/api/v1/expression", a.GetAllExpressions)
-	router.GET("/api/v1/expressionById", a.GetExpressionById)
+	router.GET("/api/v1/expressionById", a.GetExpressionByID)
 	router.POST("/api/v1/postOperationsAndTimes", a.PostOperationsAndTimes)
 	router.GET("/api/v1/getOperationsAndTimes", a.GetOperationsAndTimes)
 

@@ -1,25 +1,26 @@
-package tests
+package tests_test
 
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
-	"storage/internal/Api"
-	"storage/internal/Db"
+	"storage/internal/api"
+	"storage/internal/db"
 	"strings"
 	"testing"
 )
 
 func TestPing(t *testing.T) {
-	d, err := Db.New()
-	assert.NoError(t, err)
+	d, err := db.New()
+	require.NoError(t, err)
 
-	a := Api.New(d)
+	a := api.New(d)
 	router := a.Start()
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/v1/ping", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/ping", nil)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
@@ -27,39 +28,39 @@ func TestPing(t *testing.T) {
 }
 
 func TestPostGetExpression(t *testing.T) {
-	d, err := Db.New()
-	assert.NoError(t, err)
+	d, err := db.New()
+	require.NoError(t, err)
 
-	a := Api.New(d)
+	a := api.New(d)
 	router := a.Start()
 
 	w := httptest.NewRecorder()
-	body, _ := json.Marshal(Api.InPostExpression{Expression: "2+2"})
-	req, _ := http.NewRequest("POST", "/api/v1/expression", strings.NewReader(string(body)))
+	body, _ := json.Marshal(api.InPostExpression{Expression: "2+2"})
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expression", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	var out1 Api.OutPostExpression
+	var out1 api.OutPostExpression
 	err = json.Unmarshal(w.Body.Bytes(), &out1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "ok", out1.Message)
-	id := out1.Id
+	id := out1.ID
 
-	var in Api.InGetExpressionById
-	in.Id = id
+	var in api.InGetExpressionByID
+	in.ID = id
 	body, _ = json.Marshal(in)
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/v1/expressionById", strings.NewReader(string(body)))
+	req, _ = http.NewRequest(http.MethodGet, "/api/v1/expressionById", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	var out2 Api.OutGetExpressionById
+	var out2 api.OutGetExpressionByID
 	err = json.Unmarshal(w.Body.Bytes(), &out2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "ok", out2.Message)
 
@@ -67,10 +68,10 @@ func TestPostGetExpression(t *testing.T) {
 }
 
 func TestGetOperationsAndTimes(t *testing.T) {
-	d, err := Db.New()
-	assert.NoError(t, err)
+	d, err := db.New()
+	require.NoError(t, err)
 
-	a := Api.New(d)
+	a := api.New(d)
 	router := a.Start()
 
 	w := httptest.NewRecorder()
@@ -82,18 +83,18 @@ func TestGetOperationsAndTimes(t *testing.T) {
 	}
 	body, _ := json.Marshal(in)
 
-	req, _ := http.NewRequest("POST", "/api/v1/postOperationsAndTimes", strings.NewReader(string(body)))
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/postOperationsAndTimes", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	out := Api.OutGetOperationsAndTimes{}
+	out := api.OutGetOperationsAndTimes{}
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/v1/getOperationsAndTimes", nil)
+	req, _ = http.NewRequest(http.MethodGet, "/api/v1/getOperationsAndTimes", nil)
 	router.ServeHTTP(w, req)
 
 	err = json.Unmarshal(w.Body.Bytes(), &out)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "ok", out.Message)
 	assert.Equal(t, 100, out.Data["+"])
@@ -105,133 +106,133 @@ func TestGetOperationsAndTimes(t *testing.T) {
 }
 
 func TestGetUpdates(t *testing.T) {
-	d, err := Db.New()
-	assert.NoError(t, err)
+	d, err := db.New()
+	require.NoError(t, err)
 
-	a := Api.New(d)
+	a := api.New(d)
 	router := a.Start()
 
 	w := httptest.NewRecorder()
-	body, _ := json.Marshal(Api.InPostExpression{Expression: "2+2"})
-	req, _ := http.NewRequest("POST", "/api/v1/expression", strings.NewReader(string(body)))
+	body, _ := json.Marshal(api.InPostExpression{Expression: "2+2"})
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expression", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/v1/getUpdates", nil)
+	req, _ = http.NewRequest(http.MethodGet, "/api/v1/getUpdates", nil)
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	var out Api.OutGetUpdates
+	var out api.OutGetUpdates
 	err = json.Unmarshal(w.Body.Bytes(), &out)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "ok", out.Message)
 	assert.Equal(t, "2+2", out.Expressions[0].Value)
 }
 
 func TestConfirmStartCalculating(t *testing.T) {
-	d, err := Db.New()
-	assert.NoError(t, err)
+	d, err := db.New()
+	require.NoError(t, err)
 
-	a := Api.New(d)
+	a := api.New(d)
 	router := a.Start()
 
 	w := httptest.NewRecorder()
-	body, _ := json.Marshal(Api.InPostExpression{Expression: "2+2"})
-	req, _ := http.NewRequest("POST", "/api/v1/expression", strings.NewReader(string(body)))
+	body, _ := json.Marshal(api.InPostExpression{Expression: "2+2"})
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expression", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	var out1 Api.OutPostExpression
+	var out1 api.OutPostExpression
 	err = json.Unmarshal(w.Body.Bytes(), &out1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "ok", out1.Message)
-	id := out1.Id
+	id := out1.ID
 
-	var in Api.InConfirmStartOfCalculating
-	in.Expression.Id = id
+	var in api.InConfirmStartOfCalculating
+	in.Expression.ID = id
 	body, _ = json.Marshal(in)
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	var out2 Api.OutConfirmStartOfCalculating
+	var out2 api.OutConfirmStartOfCalculating
 	err = json.Unmarshal(w.Body.Bytes(), &out2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "ok", out2.Message)
-	assert.Equal(t, true, out2.Confirm)
+	assert.True(t, out2.Confirm)
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
 
-	var out3 Api.OutConfirmStartOfCalculating
+	var out3 api.OutConfirmStartOfCalculating
 	err = json.Unmarshal(w.Body.Bytes(), &out3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, false, out3.Confirm)
+	assert.False(t, out3.Confirm)
 }
 
 func TestPostResult(t *testing.T) {
-	d, err := Db.New()
-	assert.NoError(t, err)
+	d, err := db.New()
+	require.NoError(t, err)
 
-	a := Api.New(d)
+	a := api.New(d)
 	router := a.Start()
 
 	w := httptest.NewRecorder()
-	body, _ := json.Marshal(Api.InPostExpression{Expression: "2+2"})
-	req, _ := http.NewRequest("POST", "/api/v1/expression", strings.NewReader(string(body)))
+	body, _ := json.Marshal(api.InPostExpression{Expression: "2+2"})
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expression", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	var out Api.OutPostExpression
+	var out api.OutPostExpression
 	err = json.Unmarshal(w.Body.Bytes(), &out)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	var in Api.InConfirmStartOfCalculating
-	in.Expression.Id = out.Id
+	var in api.InConfirmStartOfCalculating
+	in.Expression.ID = out.ID
 	body, _ = json.Marshal(in)
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	var out2 Api.OutConfirmStartOfCalculating
+	var out2 api.OutConfirmStartOfCalculating
 	err = json.Unmarshal(w.Body.Bytes(), &out2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "ok", out2.Message)
 
-	var in2 Api.InPostResult
-	in2.Expression.Id = out.Id
-	in2.Expression.Status = Db.ExpressionReady
+	var in2 api.InPostResult
+	in2.Expression.ID = out.ID
+	in2.Expression.Status = db.ExpressionReady
 	in2.Expression.Answer = 4
 	in2.Expression.Logs = "ok"
 	body, _ = json.Marshal(in2)
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/v1/postResult", strings.NewReader(string(body)))
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/postResult", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	var out3 Api.OutPostResult
+	var out3 api.OutPostResult
 	err = json.Unmarshal(w.Body.Bytes(), &out3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "ok", out3.Message)
 }

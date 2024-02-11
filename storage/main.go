@@ -3,9 +3,10 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
+	// postgresql driver.
 	_ "storage/docs"
-	"storage/internal/Api"
-	"storage/internal/Db"
+	"storage/internal/api"
+	"storage/internal/db"
 )
 
 func InitLogger(debug bool) {
@@ -27,10 +28,10 @@ func InitLogger(debug bool) {
 //	@description	This is a server for the storage of expressions and their results
 
 // @host		localhost:8080
-// @BasePath	/api/v1
+// @BasePath	/api/v1.
 func main() {
 	InitLogger(true)
-	//gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
 
 	// .env
 	err := godotenv.Load()
@@ -39,13 +40,13 @@ func main() {
 	}
 
 	// db
-	d, err := Db.New()
+	d, err := db.New()
 	if err != nil {
 		zap.S().Fatal(err.Error())
 	}
 
 	// api
-	r := Api.New(d)
+	r := api.New(d)
 	err = r.Start().Run(":8080")
 	if err != nil {
 		zap.S().Fatal(err)
