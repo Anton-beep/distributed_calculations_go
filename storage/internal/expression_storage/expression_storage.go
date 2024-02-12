@@ -1,4 +1,4 @@
-package expressionstorage
+package expression_storage
 
 import (
 	"errors"

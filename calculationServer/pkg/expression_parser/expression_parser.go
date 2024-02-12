@@ -1,7 +1,7 @@
-package expressionparser
+package expression_parser
 
 import (
-	"calculationServer/internal/expressionlogger"
+	"calculationServer/internal/expression_logger"
 	"errors"
 	"fmt"
 	"strconv"
@@ -36,7 +36,7 @@ type ExpressionParser struct {
 	numberOfWorkers int
 	execTimeConfig  ExecTimeConfig
 	mu              sync.Mutex
-	logs            *expressionlogger.ExpLogger
+	logs            *expression_logger.ExpLogger
 }
 
 func isByteNumberOrPoint(b byte) bool {
@@ -104,10 +104,10 @@ func IsExecTimeConfigCorrect(execTimeConfig ExecTimeConfig) (bool, error) {
 	return true, nil
 }
 
-func NewExpressionParser() *ExpressionParser {
+func New() *ExpressionParser {
 	return &ExpressionParser{
 		numberOfWorkers: 1,
-		logs:            expressionlogger.New(),
+		logs:            expression_logger.New(),
 	}
 }
 

@@ -5,19 +5,19 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"storage/internal/db"
-	"storage/internal/expressionstorage"
+	"storage/internal/expression_storage"
 )
 
 type API struct {
 	db             *db.APIDb
-	expressions    *expressionstorage.ExpressionStorage
+	expressions    *expression_storage.ExpressionStorage
 	execTimeConfig ExecTimeConfig
 }
 
 func New(_db *db.APIDb) *API {
 	newAPI := &API{
 		db:          _db,
-		expressions: expressionstorage.New(_db),
+		expressions: expression_storage.New(_db),
 	}
 	return newAPI
 }

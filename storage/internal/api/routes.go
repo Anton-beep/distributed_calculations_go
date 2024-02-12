@@ -283,6 +283,7 @@ func (a *API) ConfirmStartCalculating(c *gin.Context) {
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusInternalServerError, out)
+		return
 	}
 	if !ok {
 		out.Confirm = false

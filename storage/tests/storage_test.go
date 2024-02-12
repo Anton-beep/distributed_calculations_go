@@ -4,14 +4,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"storage/internal/db"
-	"storage/internal/expressionstorage"
+	"storage/internal/expression_storage"
 	"testing"
 )
 
 func TestAddGetStorage(t *testing.T) {
 	d, err := db.New()
 	require.NoError(t, err)
-	e := expressionstorage.New(d)
+	e := expression_storage.New(d)
 
 	newID, err := e.Add(db.Expression{
 		ID:     0,
@@ -37,7 +37,7 @@ func TestAddGetStorage(t *testing.T) {
 func TestGetAllStorage(t *testing.T) {
 	d, err := db.New()
 	require.NoError(t, err)
-	e := expressionstorage.New(d)
+	e := expression_storage.New(d)
 
 	newID1, err := e.Add(db.Expression{
 		ID:     0,
@@ -84,7 +84,7 @@ func TestGetAllStorage(t *testing.T) {
 func TestUpdatePending(t *testing.T) {
 	d, err := db.New()
 	require.NoError(t, err)
-	e := expressionstorage.New(d)
+	e := expression_storage.New(d)
 
 	newID, err := e.Add(db.Expression{
 		ID:     0,
@@ -116,7 +116,7 @@ func TestUpdatePending(t *testing.T) {
 func TestPendingToReady(t *testing.T) {
 	d, err := db.New()
 	require.NoError(t, err)
-	e := expressionstorage.New(d)
+	e := expression_storage.New(d)
 
 	expression := db.Expression{
 		ID:     0,
