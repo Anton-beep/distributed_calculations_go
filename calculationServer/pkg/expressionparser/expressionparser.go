@@ -286,26 +286,40 @@ func (e *ExpressionParser) CalculateOperation(num1, num2 float64, operator int) 
 		return 0, fmt.Errorf("%v is not an operator", operator)
 	}
 
+	res := make(chan float64)
 	switch operator {
 	case ADD:
+		go func() {
+			res <- num1 + num2
+		}()
 		time.Sleep(duration)
 
-		return num1 + num2, nil
+		return <-res, nil
 	case SUBTRACT:
+		go func() {
+			res <- num1 - num2
+		}()
 		time.Sleep(duration)
 
-		return num1 - num2, nil
+		return <-res, nil
 	case DIVIDE:
-		time.Sleep(duration)
-
 		if num2 == 0 {
 			return 0, errors.New("division by zero")
 		}
-		return num1 / num2, nil
-	case MULTIPLY:
+
+		go func() {
+			res <- num1 / num2
+		}()
 		time.Sleep(duration)
 
-		return num1 * num2, nil
+		return <-res, nil
+	case MULTIPLY:
+		go func() {
+			res <- num1 * num2
+		}()
+		time.Sleep(duration)
+
+		return <-res, nil
 	}
 
 	return 0, errors.New("unknown operator")
