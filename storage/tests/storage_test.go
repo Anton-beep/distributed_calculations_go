@@ -11,7 +11,7 @@ import (
 func TestAddGetStorage(t *testing.T) {
 	d, err := db.New()
 	require.NoError(t, err)
-	e := expression_storage.New(d)
+	e := expression_storage.New(d, 1)
 
 	newID, err := e.Add(db.Expression{
 		ID:     0,
@@ -37,7 +37,7 @@ func TestAddGetStorage(t *testing.T) {
 func TestGetAllStorage(t *testing.T) {
 	d, err := db.New()
 	require.NoError(t, err)
-	e := expression_storage.New(d)
+	e := expression_storage.New(d, 1)
 
 	newID1, err := e.Add(db.Expression{
 		ID:     0,
@@ -84,7 +84,7 @@ func TestGetAllStorage(t *testing.T) {
 func TestUpdatePending(t *testing.T) {
 	d, err := db.New()
 	require.NoError(t, err)
-	e := expression_storage.New(d)
+	e := expression_storage.New(d, 1)
 
 	newID, err := e.Add(db.Expression{
 		ID:     0,
@@ -99,7 +99,7 @@ func TestUpdatePending(t *testing.T) {
 	require.NoError(t, err)
 
 	expression.Status = db.ExpressionReady
-	err = e.UpdatePendingExpression(expression)
+	err = e.UpdateExpression(expression)
 	require.NoError(t, err)
 
 	expression, err = e.GetByID(newID)
@@ -116,7 +116,7 @@ func TestUpdatePending(t *testing.T) {
 func TestPendingToReady(t *testing.T) {
 	d, err := db.New()
 	require.NoError(t, err)
-	e := expression_storage.New(d)
+	e := expression_storage.New(d, 1)
 
 	expression := db.Expression{
 		ID:     0,
@@ -130,7 +130,7 @@ func TestPendingToReady(t *testing.T) {
 
 	expression.Status = db.ExpressionReady
 	expression.ID = newID
-	err = e.PendingToReady(expression)
+	err = e.UpdateExpression(expression)
 	require.NoError(t, err)
 
 	expression, err = e.GetByID(newID)

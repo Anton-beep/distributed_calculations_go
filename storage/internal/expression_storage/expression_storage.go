@@ -2,18 +2,20 @@ package expression_storage
 
 import (
 	"errors"
+	"fmt"
 	"go.uber.org/zap"
 	"storage/internal/db"
 	"sync"
+	"time"
 )
 
 type ExpressionStorage struct {
-	readyExpressions   sync.Map // calculated and ready to return expressions
-	pendingExpressions sync.Map // expressions that are not ready yet and need to be calculated
-	db                 *db.APIDb
+	expressions sync.Map
+	db          *db.APIDb
+	checkAlive  time.Duration
 }
 
-func New(indb *db.APIDb) *ExpressionStorage {
+func New(indb *db.APIDb, checkAlive time.Duration) *ExpressionStorage {
 	e := &ExpressionStorage{
 		db: indb,
 	}
@@ -24,13 +26,11 @@ func New(indb *db.APIDb) *ExpressionStorage {
 		zap.S().Error(err)
 	}
 	for _, expression := range expressions {
-		if expression.Status == db.ExpressionReady {
-			e.readyExpressions.Store(expression.ID, expression)
-		} else {
-			e.pendingExpressions.Store(expression.ID, expression)
-		}
+		e.expressions.Store(expression.ID, expression)
 	}
 
+	e.checkAlive = checkAlive
+	go e.keepAliveExpressions()
 	return e
 }
 
@@ -42,17 +42,13 @@ func (e *ExpressionStorage) Add(expression db.Expression) (int, error) {
 	}
 	expression.ID = newID
 
-	e.pendingExpressions.Store(newID, expression)
+	e.expressions.Store(newID, expression)
 	return newID, nil
 }
 
 func (e *ExpressionStorage) GetAll() []db.Expression {
 	expressions := make([]db.Expression, 0)
-	e.readyExpressions.Range(func(_, value interface{}) bool {
-		expressions = append(expressions, value.(db.Expression))
-		return true
-	})
-	e.pendingExpressions.Range(func(_, value interface{}) bool {
+	e.expressions.Range(func(_, value interface{}) bool {
 		expressions = append(expressions, value.(db.Expression))
 		return true
 	})
@@ -60,10 +56,7 @@ func (e *ExpressionStorage) GetAll() []db.Expression {
 }
 
 func (e *ExpressionStorage) GetByID(id int) (db.Expression, error) {
-	if expression, ok := e.readyExpressions.Load(id); ok {
-		return expression.(db.Expression), nil
-	}
-	if expression, ok := e.pendingExpressions.Load(id); ok {
+	if expression, ok := e.expressions.Load(id); ok {
 		return expression.(db.Expression), nil
 	}
 	return db.Expression{}, errors.New("expression is not found")
@@ -72,7 +65,7 @@ func (e *ExpressionStorage) GetByID(id int) (db.Expression, error) {
 // GetNotWorkingExpressions returns all expressions that have Status == ExpressionNotReady.
 func (e *ExpressionStorage) GetNotWorkingExpressions() []db.Expression {
 	expressions := make([]db.Expression, 0)
-	e.pendingExpressions.Range(func(_, value interface{}) bool {
+	e.expressions.Range(func(_, value interface{}) bool {
 		if value.(db.Expression).Status == db.ExpressionNotReady {
 			expressions = append(expressions, value.(db.Expression))
 		}
@@ -81,12 +74,12 @@ func (e *ExpressionStorage) GetNotWorkingExpressions() []db.Expression {
 	return expressions
 }
 
-// UpdatePendingExpression updates expression in pendingExpressions and sync with database.
-func (e *ExpressionStorage) UpdatePendingExpression(expression db.Expression) error {
-	if _, ok := e.pendingExpressions.Load(expression.ID); !ok {
+// UpdateExpression updates expression in pendingExpressions and sync with database.
+func (e *ExpressionStorage) UpdateExpression(expression db.Expression) error {
+	if _, ok := e.expressions.Load(expression.ID); !ok {
 		return errors.New("expression is not found")
 	}
-	e.pendingExpressions.Store(expression.ID, expression)
+	e.expressions.Store(expression.ID, expression)
 	// sync with database
 	if err := e.db.UpdateExpression(expression); err != nil {
 		return err
@@ -94,27 +87,27 @@ func (e *ExpressionStorage) UpdatePendingExpression(expression db.Expression) er
 	return nil
 }
 
-// PendingToReady changes expression from pendingExpressions to readyExpressions and sync with database.
-func (e *ExpressionStorage) PendingToReady(expression db.Expression) error {
-	if expression.Status != db.ExpressionReady {
-		return errors.New("expression is not ready")
-	}
-
-	if _, ok := e.pendingExpressions.Load(expression.ID); !ok {
-		return errors.New("expression is not found")
-	}
-	e.pendingExpressions.Delete(expression.ID)
-	e.readyExpressions.Store(expression.ID, expression)
-	// sync with database
-	if err := e.db.UpdateExpression(expression); err != nil {
-		return err
-	}
-	return nil
-}
+//// PendingToReady changes expression from pendingExpressions to readyExpressions and sync with database.
+//func (e *ExpressionStorage) PendingToReady(expression db.Expression) error {
+//	if expression.Status != db.ExpressionReady {
+//		return errors.New("expression is not ready")
+//	}
+//
+//	if _, ok := e.pendingExpressions.Load(expression.ID); !ok {
+//		return errors.New("expression is not found")
+//	}
+//	e.pendingExpressions.Delete(expression.ID)
+//	e.readyExpressions.Store(expression.ID, expression)
+//	// sync with database
+//	if err := e.db.UpdateExpression(expression); err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 // IsExpressionWorking returns true if expression is in pendingExpressions and has Status == ExpressionWorking.
 func (e *ExpressionStorage) IsExpressionWorking(id int) (bool, error) {
-	if expression, ok := e.pendingExpressions.Load(id); ok {
+	if expression, ok := e.expressions.Load(id); ok {
 		return expression.(db.Expression).Status == db.ExpressionWorking, nil
 	}
 	return false, errors.New("expression is not found")
@@ -122,22 +115,41 @@ func (e *ExpressionStorage) IsExpressionWorking(id int) (bool, error) {
 
 // IsExpressionNotReady returns true if expression is in pendingExpressions and has Status == ExpressionNotReady.
 func (e *ExpressionStorage) IsExpressionNotReady(id int) (bool, error) {
-	if expression, ok := e.pendingExpressions.Load(id); ok {
+	if expression, ok := e.expressions.Load(id); ok {
 		return expression.(db.Expression).Status == db.ExpressionNotReady, nil
 	}
 	return false, errors.New("expression is not found")
 }
 
 func (e *ExpressionStorage) Delete(id int) error {
-	if _, ok := e.readyExpressions.Load(id); ok {
-		e.readyExpressions.Delete(id)
-	}
-	if _, ok := e.pendingExpressions.Load(id); ok {
-		e.pendingExpressions.Delete(id)
+	if _, ok := e.expressions.Load(id); ok {
+		e.expressions.Delete(id)
 	}
 	// sync with database
 	if err := e.db.DeleteExpression(id); err != nil {
 		return err
 	}
 	return nil
+}
+
+// keepAliveExpressions checks all expressions and if aliveExpiresAt is less than now, then change to not ready, so it will be calculated again via getUpdates.
+func (e *ExpressionStorage) keepAliveExpressions() {
+	// check all expressions and if aliveExpiresAt is less than now, then change to not ready
+	for {
+		time.Sleep(e.checkAlive)
+		e.expressions.Range(func(key, value interface{}) bool {
+			expression := value.(db.Expression)
+			if expression.Status == db.ExpressionWorking && expression.AliveExpiresAt < int(time.Now().Unix()) {
+				// change to not ready, so it will be calculated again
+				zap.S().Info(fmt.Sprintf("expression ID %v is not alive, change to not ready", expression.ID))
+				expression.Status = db.ExpressionNotReady
+				e.expressions.Store(key, expression)
+				// sync with database
+				if err := e.db.UpdateExpression(expression); err != nil {
+					zap.S().Error(err)
+				}
+			}
+			return true
+		})
+	}
 }

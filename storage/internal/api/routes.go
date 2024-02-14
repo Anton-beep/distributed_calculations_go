@@ -152,7 +152,7 @@ type ExecTimeConfig struct {
 }
 
 type OutGetOperationsAndTimes struct {
-	Data    map[string]int `json:"data"`
+	Data    map[string]int `json:"data"` // executions times in milliseconds: {"+": 100,...}
 	Message string         `json:"message"`
 }
 
@@ -294,7 +294,8 @@ func (a *API) ConfirmStartCalculating(c *gin.Context) {
 
 	// change to working
 	in.Expression.Status = db.ExpressionWorking
-	if err = a.expressions.UpdatePendingExpression(in.Expression); err != nil {
+	in.Expression.AliveExpiresAt = int(time.Now().Add(time.Duration(a.checkAlive) * time.Second).Unix())
+	if err = a.expressions.UpdateExpression(in.Expression); err != nil {
 		out.Confirm = false
 		c.JSON(http.StatusInternalServerError, out)
 		return
@@ -351,7 +352,7 @@ func (a *API) PostResult(c *gin.Context) {
 
 	// change to ready
 	in.Expression.Status = db.ExpressionReady
-	if err = a.expressions.PendingToReady(in.Expression); err != nil {
+	if err = a.expressions.UpdateExpression(in.Expression); err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusInternalServerError, out)
@@ -360,4 +361,39 @@ func (a *API) PostResult(c *gin.Context) {
 
 	out.Message = "ok"
 	c.JSON(http.StatusOK, out)
+}
+
+type InKeepAlive struct {
+	Expression db.Expression `json:"expression" binding:"required"`
+}
+
+type OutKeepAlive struct {
+	Message string `json:"message"`
+}
+
+func (a *API) KeepAlive(c *gin.Context) {
+	var in InKeepAlive
+	var out = OutKeepAlive{}
+	if err := c.ShouldBindJSON(&in); err != nil {
+		out.Message = err.Error()
+		c.JSON(http.StatusBadRequest, out)
+		return
+	}
+
+	expression, err := a.expressions.GetByID(in.Expression.ID)
+	if err != nil {
+		out.Message = err.Error()
+		c.JSON(http.StatusBadRequest, out)
+		return
+	}
+
+	expression.AliveExpiresAt = int(time.Now().Add(time.Duration(a.checkAlive) * time.Second).Unix())
+	err = a.expressions.UpdateExpression(expression)
+	if err != nil {
+		out.Message = err.Error()
+		c.JSON(http.StatusInternalServerError, out)
+		return
+	}
+
+	c.JSON(http.StatusOK, OutPing{Message: "ok"})
 }

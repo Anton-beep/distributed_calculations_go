@@ -23,14 +23,16 @@ const (
 type Client struct {
 	storageServer    string
 	expressionParser *expression_parser.ExpressionParser
+	keepAlive        time.Duration
 }
 
 type Expression struct {
-	ID     int     `json:"id"`
-	Value  string  `json:"value"`
-	Answer float64 `json:"answer"`
-	Logs   string  `json:"logs"`
-	Status int     `json:"ready"` // 0 - not ready, 1 - working, 2 - ready
+	ID             int     `json:"id"`
+	Value          string  `json:"value"`
+	Answer         float64 `json:"answer"`
+	Logs           string  `json:"logs"`
+	Status         int     `json:"ready"` // 0 - not ready, 1 - working, 2 - ready, 3 - error
+	AliveExpiresAt int     `json:"alive_experise_at"`
 }
 
 func New() (*Client, error) {
@@ -46,40 +48,109 @@ func New() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	num, err = strconv.Atoi(os.Getenv("SEND_ALIVE_DURATION"))
+	if err != nil {
+		return nil, err
+	}
+	c.keepAlive = time.Duration(num) * time.Second
 	return c, nil
+}
+
+func (c *Client) tryGetUpdates() (Expression, bool) {
+	zap.S().Info("try to get updates")
+	expressions, err := c.GetUpdates()
+	if err != nil {
+		zap.S().Error(err)
+	}
+	// try to take first expression for calculation
+	if len(expressions) == 0 {
+		zap.S().Info("no expressions")
+		time.Sleep(2000 * time.Millisecond)
+		return Expression{}, false
+	}
+	exp := expressions[0]
+	zap.S().Infof("got expression: %v", exp)
+	ok, err := c.TryToConfirm(exp)
+	if err != nil {
+		zap.S().Error(err)
+	}
+	if ok {
+		// server can calculate this expression
+		zap.S().Info("confirmed")
+		return exp, true
+	}
+	time.Sleep(2000 * time.Millisecond)
+	zap.S().Info("can't confirm, try to get updates again")
+	return Expression{}, false
+}
+
+func (c *Client) tryUpdateTimeConfig() {
+	config, err := c.GetOperationsAndTimes()
+	if err != nil {
+		zap.S().Error(err)
+	}
+	err = c.expressionParser.SetExecTimes(config)
+	if err != nil {
+		zap.S().Error(err)
+	}
+	zap.S().Info("exec time config updated")
+}
+
+func (c *Client) trySendResult(exp Expression) {
+	// try 10 times
+	for i := 0; i < 10; i++ {
+		zap.S().Info("try to send result")
+		ok, err := c.SendResult(exp)
+		if err != nil {
+			zap.S().Error(err)
+		}
+		if ok {
+			zap.S().Info("result sent successfully")
+			break
+		}
+		time.Sleep(2000 * time.Millisecond)
+		zap.S().Info("can't send result, try to send again")
+	}
+}
+
+func (c *Client) keepAliveExpression(exp Expression, done <-chan bool, ticker *time.Ticker) {
+	for {
+		select {
+		case <-done:
+			zap.S().Info("calculation done")
+			return
+		case <-ticker.C:
+			zap.S().Info("send alive")
+			err := c.SendAlive(exp)
+			if err != nil {
+				zap.S().Error(err)
+			}
+		}
+	}
 }
 
 func (c *Client) Run() {
 	for {
 		exp := Expression{}
+		ok := false
 		for {
-			zap.S().Info("try to get updates")
-			expressions, err := c.GetUpdates()
-			if err != nil {
-				zap.S().Error(err)
-			}
-			// try to take first expression for calculation
-			if len(expressions) == 0 {
-				zap.S().Info("no expressions")
-				time.Sleep(2000 * time.Millisecond)
-				continue
-			}
-			exp = expressions[0]
-			zap.S().Infof("got expression: %v", exp)
-			ok, err := c.TryToConfirm(exp)
-			if err != nil {
-				zap.S().Error(err)
-			}
+			exp, ok = c.tryGetUpdates()
 			if ok {
-				// server can calculate this expression
-				zap.S().Info("confirmed")
 				break
 			}
-			time.Sleep(2000 * time.Millisecond)
-			zap.S().Info("can't confirm, try to get updates again")
 		}
 
+		// update exec time config
+		c.tryUpdateTimeConfig()
+
+		ticker := time.NewTicker(c.keepAlive)
+		done := make(chan bool)
+		// keep this client alive for the server
+		go c.keepAliveExpression(exp, done, ticker)
 		res, logs, err := c.expressionParser.CalculateExpression(exp.Value)
+		ticker.Stop()
+		done <- true
 		if err != nil {
 			zap.S().Error(err)
 		}
@@ -88,20 +159,8 @@ func (c *Client) Run() {
 		exp.Status = ExpressionError
 		zap.S().Infof("result: %v", exp)
 
-		ok := false
-		for {
-			zap.S().Info("try to send result")
-			ok, err = c.SendResult(exp)
-			if err != nil {
-				zap.S().Error(err)
-			}
-			if ok {
-				zap.S().Info("result sent successfully")
-				break
-			}
-			time.Sleep(2000 * time.Millisecond)
-			zap.S().Info("can't send result, try to send again")
-		}
+		// send result
+		c.trySendResult(exp)
 	}
 }
 
@@ -200,9 +259,14 @@ func (c *Client) SendResult(expression Expression) (bool, error) {
 	return ans.Message == "ok", nil
 }
 
+type AnsGetOperationsAndTimes struct {
+	Data    map[string]int `json:"data"`
+	Message string         `json:"message"`
+}
+
 // GetOperationsAndTimes returns the time for each operation from the storage
 func (c *Client) GetOperationsAndTimes() (expression_parser.ExecTimeConfig, error) {
-	var ans map[string]int
+	var ans AnsGetOperationsAndTimes
 
 	resp, err := http.Get(c.storageServer + "/getOperationsAndTimes")
 	if err != nil {
@@ -220,7 +284,7 @@ func (c *Client) GetOperationsAndTimes() (expression_parser.ExecTimeConfig, erro
 	}
 
 	var config expression_parser.ExecTimeConfig
-	for key, val := range ans {
+	for key, val := range ans.Data {
 		switch key {
 		case "+":
 			config.TimeAdd = time.Duration(val) * time.Millisecond
@@ -236,4 +300,23 @@ func (c *Client) GetOperationsAndTimes() (expression_parser.ExecTimeConfig, erro
 	}
 
 	return config, nil
+}
+
+type sendAlive struct {
+	Expression Expression `json:"expression"`
+}
+
+func (c *Client) SendAlive(expression Expression) error {
+	var send sendAlive
+	send.Expression = expression
+	body, err := json.Marshal(send)
+	if err != nil {
+		return err
+	}
+
+	_, err = http.Post(c.storageServer+"/keepAlive", "application/json", strings.NewReader(string(body)))
+	if err != nil {
+		return err
+	}
+	return nil
 }

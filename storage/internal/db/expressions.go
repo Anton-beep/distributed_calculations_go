@@ -4,14 +4,16 @@ const (
 	ExpressionNotReady = 0
 	ExpressionWorking  = 1
 	ExpressionReady    = 2
+	ExpressionError    = 3
 )
 
 type Expression struct {
-	ID     int     `db:"id" json:"id"`
-	Value  string  `db:"value" json:"value"`
-	Answer float64 `db:"answer" json:"answer"`
-	Logs   string  `db:"logs" json:"logs"`
-	Status int     `db:"ready" json:"ready"` // 0 - not ready, 1 - working, 2 - ready
+	ID             int     `db:"id" json:"id"`
+	Value          string  `db:"value" json:"value"`
+	Answer         float64 `db:"answer" json:"answer"`
+	Logs           string  `db:"logs" json:"logs"`
+	Status         int     `db:"ready" json:"ready"` // 0 - not ready, 1 - working, 2 - ready, 3 - error
+	AliveExpiresAt int     `db:"alive_experise_at" json:"alive_experise_at"`
 }
 
 func (a *APIDb) GetAllExpressions() ([]Expression, error) {
@@ -30,7 +32,7 @@ func (a *APIDb) GetAllExpressions() ([]Expression, error) {
 
 	for rows.Next() {
 		expression := Expression{}
-		err = rows.Scan(&expression.ID, &expression.Value, &expression.Answer, &expression.Logs, &expression.Status)
+		err = rows.Scan(&expression.ID, &expression.Value, &expression.Answer, &expression.Logs, &expression.Status, &expression.AliveExpiresAt)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +45,7 @@ func (a *APIDb) GetAllExpressions() ([]Expression, error) {
 func (a *APIDb) GetExpressionByID(id int) (Expression, error) {
 	expression := Expression{}
 	err := a.db.QueryRow("SELECT * FROM expressions WHERE id=$1", id).
-		Scan(&expression.ID, &expression.Value, &expression.Answer, &expression.Logs, &expression.Status)
+		Scan(&expression.ID, &expression.Value, &expression.Answer, &expression.Logs, &expression.Status, &expression.AliveExpiresAt)
 	if err != nil {
 		return expression, err
 	}
@@ -52,8 +54,8 @@ func (a *APIDb) GetExpressionByID(id int) (Expression, error) {
 
 func (a *APIDb) AddExpression(expression Expression) (int, error) {
 	var id int
-	err := a.db.QueryRow("INSERT INTO expressions(value, answer, logs, ready) VALUES($1, $2, $3, $4) RETURNING id",
-		expression.Value, expression.Answer, expression.Logs, expression.Status).Scan(&id)
+	err := a.db.QueryRow("INSERT INTO expressions(value, answer, logs, ready, alive_expires_at) VALUES($1, $2, $3, $4, $5) RETURNING id",
+		expression.Value, expression.Answer, expression.Logs, expression.Status, expression.AliveExpiresAt).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -61,8 +63,8 @@ func (a *APIDb) AddExpression(expression Expression) (int, error) {
 }
 
 func (a *APIDb) UpdateExpression(expression Expression) error {
-	_, err := a.db.Exec("UPDATE expressions SET value=$1, answer=$2, logs=$3, ready=$4 WHERE id=$5",
-		expression.Value, expression.Answer, expression.Logs, expression.Status, expression.ID)
+	_, err := a.db.Exec("UPDATE expressions SET value=$1, answer=$2, logs=$3, ready=$4, alive_expires_at=$5 WHERE id=$6",
+		expression.Value, expression.Answer, expression.Logs, expression.Status, expression.AliveExpiresAt, expression.ID)
 	return err
 }
 

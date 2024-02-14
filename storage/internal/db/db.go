@@ -55,7 +55,7 @@ func (a *APIDb) ResetDatabase() {
 	if err != nil {
 		zap.S().Fatal(err)
 	}
-	_, err = a.db.Exec("CREATE TABLE expressions (id SERIAL PRIMARY KEY, value TEXT, answer FLOAT, logs TEXT, ready INT)")
+	_, err = a.db.Exec("CREATE TABLE expressions (id SERIAL PRIMARY KEY, value TEXT, answer FLOAT, logs TEXT, ready INT, alive_expires_at BIGINT)")
 	if err != nil {
 		zap.S().Fatal(err)
 	}

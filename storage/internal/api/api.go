@@ -4,20 +4,30 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.uber.org/zap"
+	"os"
 	"storage/internal/db"
 	"storage/internal/expression_storage"
+	"strconv"
+	"time"
 )
 
 type API struct {
 	db             *db.APIDb
 	expressions    *expression_storage.ExpressionStorage
 	execTimeConfig ExecTimeConfig
+	checkAlive     int
 }
 
 func New(_db *db.APIDb) *API {
+	num, err := strconv.Atoi(os.Getenv("CHECK_SERVER_DURATION"))
+	if err != nil {
+		zap.S().Fatal(err)
+	}
 	newAPI := &API{
 		db:          _db,
-		expressions: expression_storage.New(_db),
+		expressions: expression_storage.New(_db, time.Duration(num)*time.Second),
+		checkAlive:  num,
 	}
 	return newAPI
 }
@@ -38,6 +48,7 @@ func (a *API) Start() *gin.Engine {
 	router.GET("/api/v1/getUpdates", a.GetUpdates)
 	router.POST("/api/v1/confirmStartCalculating", a.ConfirmStartCalculating)
 	router.POST("/api/v1/postResult", a.PostResult)
+	router.POST("/api/v1/keepAlive", a.KeepAlive)
 
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

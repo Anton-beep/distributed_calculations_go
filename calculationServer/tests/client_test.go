@@ -20,6 +20,8 @@ func clientSetup(t *testing.T, servUrl string) *storage_client.Client {
 	require.NoError(t, err)
 	err = os.Setenv("NUMBER_OF_CALCULATORS", "1")
 	require.NoError(t, err)
+	err = os.Setenv("SEND_ALIVE_DURATION", "1")
+	require.NoError(t, err)
 	client, err := storage_client.New()
 	require.NoError(t, err)
 	return client
@@ -29,7 +31,7 @@ func TestGetUpdates(t *testing.T) {
 	server := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			_, err := fmt.Fprint(w, `{"tasks":[{"id":1,"value":"2+2","answer":0,"logs":"","status":0}], "message":"ok"`)
+			_, err := fmt.Fprint(w, `{"tasks":[{"id":1,"value":"2+2","answer":0,"logs":"","ready":0}], "message":"ok"}`)
 			if err != nil {
 				require.NoError(t, err)
 			}
@@ -50,10 +52,16 @@ func TestConfirmTrue(t *testing.T) {
 			assert.Equal(t, http.MethodPost, r.Method)
 			body, err := io.ReadAll(r.Body)
 			require.NoError(t, err)
-			var ans storage_client.Expression
+			var ans storage_client.SendConfirmStartOfCalculating
 			err = json.Unmarshal(body, &ans)
 			require.NoError(t, err)
-			assert.Equal(t, storage_client.Expression{ID: 1, Value: "2+2", Answer: 0, Logs: "", Status: 0}, ans)
+			assert.Equal(t, storage_client.SendConfirmStartOfCalculating{Expression: storage_client.Expression{
+				ID:     1,
+				Value:  "2+2",
+				Answer: 0,
+				Logs:   "",
+				Status: 0,
+			}}, ans)
 
 			_, err = fmt.Fprint(w, `{"confirm": true, "message": "ok"}`)
 			if err != nil {
@@ -93,7 +101,7 @@ func TestConfirmFalse(t *testing.T) {
 func TestGetOperationsAndTimes(t *testing.T) {
 	server := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			_, err := fmt.Fprint(w, `{"+":100, "-":200, "*":300, "/":400}`)
+			_, err := fmt.Fprint(w, `{"data": {"+":100, "-":200, "*":300, "/":400}, "message": "ok"}`)
 			if err != nil {
 				require.NoError(t, err)
 			}
