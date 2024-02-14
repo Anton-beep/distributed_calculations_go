@@ -7,14 +7,14 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"storage/internal/db"
-	"storage/internal/expression_storage"
+	"storage/internal/expressionstorage"
 	"strconv"
 	"time"
 )
 
 type API struct {
 	db             *db.APIDb
-	expressions    *expression_storage.ExpressionStorage
+	expressions    *expressionstorage.ExpressionStorage
 	execTimeConfig ExecTimeConfig
 	checkAlive     int
 }
@@ -26,7 +26,7 @@ func New(_db *db.APIDb) *API {
 	}
 	newAPI := &API{
 		db:          _db,
-		expressions: expression_storage.New(_db, time.Duration(num)*time.Second),
+		expressions: expressionstorage.New(_db, time.Duration(num)*time.Second),
 		checkAlive:  num,
 	}
 	return newAPI

@@ -1,7 +1,7 @@
-package storage_client
+package storageclient
 
 import (
-	"calculationServer/pkg/expression_parser"
+	"calculationServer/pkg/expressionparser"
 	"encoding/json"
 	"fmt"
 	"go.uber.org/zap"
@@ -22,7 +22,7 @@ const (
 
 type Client struct {
 	storageServer    string
-	expressionParser *expression_parser.ExpressionParser
+	expressionParser *expressionparser.ExpressionParser
 	keepAlive        time.Duration
 }
 
@@ -38,7 +38,7 @@ type Expression struct {
 func New() (*Client, error) {
 	c := &Client{}
 	c.storageServer = os.Getenv("STORAGE_URL")
-	c.expressionParser = expression_parser.New()
+	c.expressionParser = expressionparser.New()
 
 	num, err := strconv.Atoi(os.Getenv("NUMBER_OF_CALCULATORS"))
 	if err != nil {
@@ -133,7 +133,7 @@ func (c *Client) keepAliveExpression(exp Expression, done <-chan bool, ticker *t
 func (c *Client) Run() {
 	for {
 		exp := Expression{}
-		ok := false
+		var ok bool
 		for {
 			exp, ok = c.tryGetUpdates()
 			if ok {
@@ -169,7 +169,7 @@ type AnsGetUpdates struct {
 	Message string       `json:"message"`
 }
 
-// GetUpdates returns all expressions for calculation
+// GetUpdates returns all expressions for calculation.
 func (c *Client) GetUpdates() ([]Expression, error) {
 	resp, err := http.Get(c.storageServer + "/getUpdates")
 	if err != nil {
@@ -199,7 +199,7 @@ type AnsConfirmStartOfCalculating struct {
 	Message string `json:"message"`
 }
 
-// TryToConfirm returns true if the expression is not being calculated by another server
+// TryToConfirm returns true if the expression is not being calculated by another server.
 func (c *Client) TryToConfirm(expression Expression) (bool, error) {
 	data := SendConfirmStartOfCalculating{Expression: expression}
 	body, err := json.Marshal(data)
@@ -233,7 +233,7 @@ type AnsSendResult struct {
 	Message string `json:"message"`
 }
 
-// SendResult sends the result of the expression to the storage
+// SendResult sends the result of the expression to the storage.
 func (c *Client) SendResult(expression Expression) (bool, error) {
 	data := sendResult{Expression: expression}
 	body, err := json.Marshal(data)
@@ -264,26 +264,26 @@ type AnsGetOperationsAndTimes struct {
 	Message string         `json:"message"`
 }
 
-// GetOperationsAndTimes returns the time for each operation from the storage
-func (c *Client) GetOperationsAndTimes() (expression_parser.ExecTimeConfig, error) {
+// GetOperationsAndTimes returns the time for each operation from the storage.
+func (c *Client) GetOperationsAndTimes() (expressionparser.ExecTimeConfig, error) {
 	var ans AnsGetOperationsAndTimes
 
 	resp, err := http.Get(c.storageServer + "/getOperationsAndTimes")
 	if err != nil {
-		return expression_parser.ExecTimeConfig{}, err
+		return expressionparser.ExecTimeConfig{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return expression_parser.ExecTimeConfig{}, err
+		return expressionparser.ExecTimeConfig{}, err
 	}
 
 	if err = json.Unmarshal(body, &ans); err != nil {
-		return expression_parser.ExecTimeConfig{}, err
+		return expressionparser.ExecTimeConfig{}, err
 	}
 
-	var config expression_parser.ExecTimeConfig
+	var config expressionparser.ExecTimeConfig
 	for key, val := range ans.Data {
 		switch key {
 		case "+":
@@ -295,7 +295,7 @@ func (c *Client) GetOperationsAndTimes() (expression_parser.ExecTimeConfig, erro
 		case "*":
 			config.TimeMultiply = time.Duration(val) * time.Millisecond
 		default:
-			return expression_parser.ExecTimeConfig{}, fmt.Errorf("unknown operator: %s", key)
+			return expressionparser.ExecTimeConfig{}, fmt.Errorf("unknown operator: %s", key)
 		}
 	}
 
@@ -314,9 +314,11 @@ func (c *Client) SendAlive(expression Expression) error {
 		return err
 	}
 
-	_, err = http.Post(c.storageServer+"/keepAlive", "application/json", strings.NewReader(string(body)))
+	resp, err := http.Post(c.storageServer+"/keepAlive", "application/json", strings.NewReader(string(body)))
+
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	return nil
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	_ "calculationServer/docs"
-	"calculationServer/internal/storage_client"
+	"calculationServer/internal/storageclient"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// start client work
-	c, err := storage_client.New()
+	c, err := storageclient.New()
 	if err != nil {
 		zap.S().Fatal(err)
 	}

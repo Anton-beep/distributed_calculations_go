@@ -1,8 +1,8 @@
-package tests
+package tests_test
 
 import (
-	"calculationServer/internal/storage_client"
-	"calculationServer/pkg/expression_parser"
+	"calculationServer/internal/storageclient"
+	"calculationServer/pkg/expressionparser"
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -10,26 +10,22 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 )
 
-func clientSetup(t *testing.T, servUrl string) *storage_client.Client {
-	err := os.Setenv("STORAGE_URL", servUrl)
-	require.NoError(t, err)
-	err = os.Setenv("NUMBER_OF_CALCULATORS", "1")
-	require.NoError(t, err)
-	err = os.Setenv("SEND_ALIVE_DURATION", "1")
-	require.NoError(t, err)
-	client, err := storage_client.New()
+func clientSetup(t *testing.T, servURL string) *storageclient.Client {
+	t.Setenv("STORAGE_URL", servURL)
+	t.Setenv("NUMBER_OF_CALCULATORS", "1")
+	t.Setenv("SEND_ALIVE_DURATION", "1")
+	client, err := storageclient.New()
 	require.NoError(t, err)
 	return client
 }
 
 func TestGetUpdates(t *testing.T) {
 	server := httptest.NewServer(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_, err := fmt.Fprint(w, `{"tasks":[{"id":1,"value":"2+2","answer":0,"logs":"","ready":0}], "message":"ok"}`)
 			if err != nil {
@@ -43,7 +39,7 @@ func TestGetUpdates(t *testing.T) {
 	expressions, err := client.GetUpdates()
 	require.NoError(t, err)
 
-	assert.Equal(t, []storage_client.Expression{{ID: 1, Value: "2+2", Answer: 0, Logs: "", Status: 0}}, expressions)
+	assert.Equal(t, []storageclient.Expression{{ID: 1, Value: "2+2", Answer: 0, Logs: "", Status: 0}}, expressions)
 }
 
 func TestConfirmTrue(t *testing.T) {
@@ -52,10 +48,10 @@ func TestConfirmTrue(t *testing.T) {
 			assert.Equal(t, http.MethodPost, r.Method)
 			body, err := io.ReadAll(r.Body)
 			require.NoError(t, err)
-			var ans storage_client.SendConfirmStartOfCalculating
+			var ans storageclient.SendConfirmStartOfCalculating
 			err = json.Unmarshal(body, &ans)
 			require.NoError(t, err)
-			assert.Equal(t, storage_client.SendConfirmStartOfCalculating{Expression: storage_client.Expression{
+			assert.Equal(t, storageclient.SendConfirmStartOfCalculating{Expression: storageclient.Expression{
 				ID:     1,
 				Value:  "2+2",
 				Answer: 0,
@@ -73,15 +69,15 @@ func TestConfirmTrue(t *testing.T) {
 
 	client := clientSetup(t, server.URL)
 
-	ans := storage_client.Expression{ID: 1, Value: "2+2", Answer: 0, Logs: "", Status: 0}
+	ans := storageclient.Expression{ID: 1, Value: "2+2", Answer: 0, Logs: "", Status: 0}
 	confirm, err := client.TryToConfirm(ans)
 	require.NoError(t, err)
-	assert.Equal(t, true, confirm)
+	assert.True(t, confirm)
 }
 
 func TestConfirmFalse(t *testing.T) {
 	server := httptest.NewServer(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			_, err := fmt.Fprint(w, `{"confirm": false, "message": "expression is not in pending"}`)
 			if err != nil {
 				require.NoError(t, err)
@@ -92,15 +88,15 @@ func TestConfirmFalse(t *testing.T) {
 
 	client := clientSetup(t, server.URL)
 
-	ans := storage_client.Expression{ID: 1, Value: "2+2", Answer: 0, Logs: "", Status: 0}
+	ans := storageclient.Expression{ID: 1, Value: "2+2", Answer: 0, Logs: "", Status: 0}
 	confirm, err := client.TryToConfirm(ans)
 	require.NoError(t, err)
-	assert.Equal(t, false, confirm)
+	assert.False(t, confirm)
 }
 
 func TestGetOperationsAndTimes(t *testing.T) {
 	server := httptest.NewServer(
-		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			_, err := fmt.Fprint(w, `{"data": {"+":100, "-":200, "*":300, "/":400}, "message": "ok"}`)
 			if err != nil {
 				require.NoError(t, err)
@@ -113,7 +109,7 @@ func TestGetOperationsAndTimes(t *testing.T) {
 
 	operations, err := client.GetOperationsAndTimes()
 	require.NoError(t, err)
-	assert.Equal(t, expression_parser.ExecTimeConfig{
+	assert.Equal(t, expressionparser.ExecTimeConfig{
 		TimeAdd:      100 * time.Millisecond,
 		TimeSubtract: 200 * time.Millisecond,
 		TimeMultiply: 300 * time.Millisecond,

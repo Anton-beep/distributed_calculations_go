@@ -286,5 +286,5 @@ func TestAlive(t *testing.T) {
 
 	assert.Equal(t, "ok", out.Message)
 	assert.Equal(t, 1, out.Expression.ID)
-	assert.True(t, out.Expression.AliveExpiresAt > 0)
+	assert.Greater(t, out.Expression.AliveExpiresAt, 0)
 }

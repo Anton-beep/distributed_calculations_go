@@ -59,11 +59,12 @@ func (a *API) PostExpression(c *gin.Context) {
 
 	// add expression to storage
 	newExpression := db.Expression{
-		ID:     0,
-		Value:  in.Expression,
-		Answer: 0,
-		Logs:   "",
-		Status: db.ExpressionNotReady,
+		ID:           0,
+		Value:        in.Expression,
+		Answer:       0,
+		Logs:         "",
+		Status:       db.ExpressionNotReady,
+		CreationTime: time.Now().Format("2006-01-02 15:04:05"),
 	}
 	newID, err := a.expressions.Add(newExpression)
 	if err != nil {
@@ -163,8 +164,7 @@ type OutGetOperationsAndTimes struct {
 //	@Tags			operations
 //	@Accept			json
 //	@Produce		json
-//	@Param			map[string]int	true		"Operations and times"
-//	@Success		200				{object}	OutGetOperationsAndTimes
+//	@Success		200	{object}	OutGetOperationsAndTimes
 //	@Router			/getOperationsAndTimes [get]
 func (a *API) GetOperationsAndTimes(c *gin.Context) {
 	outMap := make(map[string]int)
@@ -352,6 +352,7 @@ func (a *API) PostResult(c *gin.Context) {
 
 	// change to ready
 	in.Expression.Status = db.ExpressionReady
+	in.Expression.EndCalculationTime = time.Now().Format("2006-01-02 15:04:05")
 	if err = a.expressions.UpdateExpression(in.Expression); err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
@@ -371,6 +372,18 @@ type OutKeepAlive struct {
 	Message string `json:"message"`
 }
 
+// KeepAlive godoc
+//
+//	@Summary		Keep alive
+//	@Description	Keep alive for expression to coordinate work of calculation servers
+//	@Tags			updates (used by calculation server)
+//	@Accept			json
+//	@Produce		json
+//	@Param			expression	body		InKeepAlive	true	"Expression"
+//	@Success		200			{object}	OutPing
+//	@Failure		400			{object}	OutPing
+//	@Failure		500			{object}	OutPing
+//	@Router			/keepAlive [post]
 func (a *API) KeepAlive(c *gin.Context) {
 	var in InKeepAlive
 	var out = OutKeepAlive{}

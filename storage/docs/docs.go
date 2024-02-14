@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Api.InConfirmStartOfCalculating"
+                            "$ref": "#/definitions/api.InConfirmStartOfCalculating"
                         }
                     }
                 ],
@@ -43,19 +43,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutConfirmStartOfCalculating"
+                            "$ref": "#/definitions/api.OutConfirmStartOfCalculating"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutConfirmStartOfCalculating"
+                            "$ref": "#/definitions/api.OutConfirmStartOfCalculating"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutConfirmStartOfCalculating"
+                            "$ref": "#/definitions/api.OutConfirmStartOfCalculating"
                         }
                     }
                 }
@@ -78,7 +78,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutGetAllExpressions"
+                            "$ref": "#/definitions/api.OutGetAllExpressions"
                         }
                     }
                 }
@@ -102,7 +102,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Api.InPostExpression"
+                            "$ref": "#/definitions/api.InPostExpression"
                         }
                     }
                 ],
@@ -110,13 +110,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutPostExpression"
+                            "$ref": "#/definitions/api.OutPostExpression"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutPostExpression"
+                            "$ref": "#/definitions/api.OutPostExpression"
                         }
                     }
                 }
@@ -142,7 +142,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Api.InGetExpressionById"
+                            "$ref": "#/definitions/api.InGetExpressionByID"
                         }
                     }
                 ],
@@ -150,19 +150,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutGetExpressionById"
+                            "$ref": "#/definitions/api.OutGetExpressionByID"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutGetExpressionById"
+                            "$ref": "#/definitions/api.OutGetExpressionByID"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutGetExpressionById"
+                            "$ref": "#/definitions/api.OutGetExpressionByID"
                         }
                     }
                 }
@@ -170,7 +170,7 @@ const docTemplate = `{
         },
         "/getOperationsAndTimes": {
             "get": {
-                "description": "Get operations and times for calculation",
+                "description": "Get operations and times for calculation as a map of operation and time in milliseconds, {\"+\": 100,...}",
                 "consumes": [
                     "application/json"
                 ],
@@ -185,7 +185,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutGetOperationsAndTimes"
+                            "$ref": "#/definitions/api.OutGetOperationsAndTimes"
                         }
                     }
                 }
@@ -208,7 +208,53 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutGetUpdates"
+                            "$ref": "#/definitions/api.OutGetUpdates"
+                        }
+                    }
+                }
+            }
+        },
+        "/keepAlive": {
+            "post": {
+                "description": "Keep alive for expression to coordinate work of calculation servers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "updates (used by calculation server)"
+                ],
+                "summary": "Keep alive",
+                "parameters": [
+                    {
+                        "description": "Expression",
+                        "name": "expression",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.InKeepAlive"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutPing"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutPing"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutPing"
                         }
                     }
                 }
@@ -231,7 +277,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutPing"
+                            "$ref": "#/definitions/api.OutPing"
                         }
                     }
                 }
@@ -239,7 +285,7 @@ const docTemplate = `{
         },
         "/postOperationsAndTimes": {
             "post": {
-                "description": "Set operations and times for calculation",
+                "description": "Set operations and times for calculation as a map of operation and time in milliseconds, {\"+\": 100,...}",
                 "consumes": [
                     "application/json"
                 ],
@@ -268,13 +314,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutSetOperationsAndTimes"
+                            "$ref": "#/definitions/api.OutSetOperationsAndTimes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutSetOperationsAndTimes"
+                            "$ref": "#/definitions/api.OutSetOperationsAndTimes"
                         }
                     }
                 }
@@ -282,7 +328,7 @@ const docTemplate = `{
         },
         "/postResult": {
             "post": {
-                "description": "Post result of calculation for expression",
+                "description": "Post result of the calculation",
                 "consumes": [
                     "application/json"
                 ],
@@ -300,7 +346,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/Api.InPostResult"
+                            "$ref": "#/definitions/api.InPostResult"
                         }
                     }
                 ],
@@ -308,19 +354,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutPostResult"
+                            "$ref": "#/definitions/api.OutPostResult"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutPostResult"
+                            "$ref": "#/definitions/api.OutPostResult"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/Api.OutPostResult"
+                            "$ref": "#/definitions/api.OutPostResult"
                         }
                     }
                 }
@@ -328,18 +374,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "Api.InConfirmStartOfCalculating": {
+        "api.InConfirmStartOfCalculating": {
             "type": "object",
             "required": [
                 "expression"
             ],
             "properties": {
                 "expression": {
-                    "$ref": "#/definitions/Db.Expression"
+                    "$ref": "#/definitions/db.Expression"
                 }
             }
         },
-        "Api.InGetExpressionById": {
+        "api.InGetExpressionByID": {
             "type": "object",
             "required": [
                 "id"
@@ -350,7 +396,18 @@ const docTemplate = `{
                 }
             }
         },
-        "Api.InPostExpression": {
+        "api.InKeepAlive": {
+            "type": "object",
+            "required": [
+                "expression"
+            ],
+            "properties": {
+                "expression": {
+                    "$ref": "#/definitions/db.Expression"
+                }
+            }
+        },
+        "api.InPostExpression": {
             "type": "object",
             "required": [
                 "expression"
@@ -361,18 +418,18 @@ const docTemplate = `{
                 }
             }
         },
-        "Api.InPostResult": {
+        "api.InPostResult": {
             "type": "object",
             "required": [
                 "expression"
             ],
             "properties": {
                 "expression": {
-                    "$ref": "#/definitions/Db.Expression"
+                    "$ref": "#/definitions/db.Expression"
                 }
             }
         },
-        "Api.OutConfirmStartOfCalculating": {
+        "api.OutConfirmStartOfCalculating": {
             "type": "object",
             "properties": {
                 "confirm": {
@@ -383,13 +440,13 @@ const docTemplate = `{
                 }
             }
         },
-        "Api.OutGetAllExpressions": {
+        "api.OutGetAllExpressions": {
             "type": "object",
             "properties": {
                 "expressions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Db.Expression"
+                        "$ref": "#/definitions/db.Expression"
                     }
                 },
                 "message": {
@@ -397,21 +454,22 @@ const docTemplate = `{
                 }
             }
         },
-        "Api.OutGetExpressionById": {
+        "api.OutGetExpressionByID": {
             "type": "object",
             "properties": {
                 "expression": {
-                    "$ref": "#/definitions/Db.Expression"
+                    "$ref": "#/definitions/db.Expression"
                 },
                 "message": {
                     "type": "string"
                 }
             }
         },
-        "Api.OutGetOperationsAndTimes": {
+        "api.OutGetOperationsAndTimes": {
             "type": "object",
             "properties": {
                 "data": {
+                    "description": "executions times in milliseconds: {\"+\": 100,...}",
                     "type": "object",
                     "additionalProperties": {
                         "type": "integer"
@@ -422,7 +480,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Api.OutGetUpdates": {
+        "api.OutGetUpdates": {
             "type": "object",
             "required": [
                 "tasks"
@@ -434,12 +492,12 @@ const docTemplate = `{
                 "tasks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Db.Expression"
+                        "$ref": "#/definitions/db.Expression"
                     }
                 }
             }
         },
-        "Api.OutPing": {
+        "api.OutPing": {
             "type": "object",
             "properties": {
                 "message": {
@@ -447,7 +505,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Api.OutPostExpression": {
+        "api.OutPostExpression": {
             "type": "object",
             "properties": {
                 "id": {
@@ -458,7 +516,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Api.OutPostResult": {
+        "api.OutPostResult": {
             "type": "object",
             "properties": {
                 "message": {
@@ -466,7 +524,7 @@ const docTemplate = `{
                 }
             }
         },
-        "Api.OutSetOperationsAndTimes": {
+        "api.OutSetOperationsAndTimes": {
             "type": "object",
             "properties": {
                 "message": {
@@ -474,11 +532,20 @@ const docTemplate = `{
                 }
             }
         },
-        "Db.Expression": {
+        "db.Expression": {
             "type": "object",
             "properties": {
+                "alive_experise_at": {
+                    "type": "integer"
+                },
                 "answer": {
                     "type": "number"
+                },
+                "creation_time": {
+                    "type": "string"
+                },
+                "end_calculation_time": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
@@ -487,7 +554,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "ready": {
-                    "description": "0 - not ready, 1 - working, 2 - ready",
+                    "description": "0 - not ready, 1 - working, 2 - ready, 3 - error",
                     "type": "integer"
                 },
                 "value": {
@@ -502,7 +569,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	BasePath:         "/api/v1.",
 	Schemes:          []string{},
 	Title:            "Swagger Storage API",
 	Description:      "This is a server for the storage of expressions and their results",

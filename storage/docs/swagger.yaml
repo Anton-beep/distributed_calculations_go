@@ -1,108 +1,122 @@
-basePath: /api/v1
+basePath: /api/v1.
 definitions:
-  Api.InConfirmStartOfCalculating:
+  api.InConfirmStartOfCalculating:
     properties:
       expression:
-        $ref: '#/definitions/Db.Expression'
+        $ref: '#/definitions/db.Expression'
     required:
     - expression
     type: object
-  Api.InGetExpressionById:
+  api.InGetExpressionByID:
     properties:
       id:
         type: integer
     required:
     - id
     type: object
-  Api.InPostExpression:
+  api.InKeepAlive:
+    properties:
+      expression:
+        $ref: '#/definitions/db.Expression'
+    required:
+    - expression
+    type: object
+  api.InPostExpression:
     properties:
       expression:
         type: string
     required:
     - expression
     type: object
-  Api.InPostResult:
+  api.InPostResult:
     properties:
       expression:
-        $ref: '#/definitions/Db.Expression'
+        $ref: '#/definitions/db.Expression'
     required:
     - expression
     type: object
-  Api.OutConfirmStartOfCalculating:
+  api.OutConfirmStartOfCalculating:
     properties:
       confirm:
         type: boolean
       message:
         type: string
     type: object
-  Api.OutGetAllExpressions:
+  api.OutGetAllExpressions:
     properties:
       expressions:
         items:
-          $ref: '#/definitions/Db.Expression'
+          $ref: '#/definitions/db.Expression'
         type: array
       message:
         type: string
     type: object
-  Api.OutGetExpressionById:
+  api.OutGetExpressionByID:
     properties:
       expression:
-        $ref: '#/definitions/Db.Expression'
+        $ref: '#/definitions/db.Expression'
       message:
         type: string
     type: object
-  Api.OutGetOperationsAndTimes:
+  api.OutGetOperationsAndTimes:
     properties:
       data:
         additionalProperties:
           type: integer
+        description: 'executions times in milliseconds: {"+": 100,...}'
         type: object
       message:
         type: string
     type: object
-  Api.OutGetUpdates:
+  api.OutGetUpdates:
     properties:
       message:
         type: string
       tasks:
         items:
-          $ref: '#/definitions/Db.Expression'
+          $ref: '#/definitions/db.Expression'
         type: array
     required:
     - tasks
     type: object
-  Api.OutPing:
+  api.OutPing:
     properties:
       message:
         type: string
     type: object
-  Api.OutPostExpression:
+  api.OutPostExpression:
     properties:
       id:
         type: integer
       message:
         type: string
     type: object
-  Api.OutPostResult:
+  api.OutPostResult:
     properties:
       message:
         type: string
     type: object
-  Api.OutSetOperationsAndTimes:
+  api.OutSetOperationsAndTimes:
     properties:
       message:
         type: string
     type: object
-  Db.Expression:
+  db.Expression:
     properties:
+      alive_experise_at:
+        type: integer
       answer:
         type: number
+      creation_time:
+        type: string
+      end_calculation_time:
+        type: string
       id:
         type: integer
       logs:
         type: string
       ready:
-        description: 0 - not ready, 1 - working, 2 - ready
+        description: 0 - not ready, 1 - working, 2 - ready, 3 - error
         type: integer
       value:
         type: string
@@ -126,22 +140,22 @@ paths:
         name: expression
         required: true
         schema:
-          $ref: '#/definitions/Api.InConfirmStartOfCalculating'
+          $ref: '#/definitions/api.InConfirmStartOfCalculating'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutConfirmStartOfCalculating'
+            $ref: '#/definitions/api.OutConfirmStartOfCalculating'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Api.OutConfirmStartOfCalculating'
+            $ref: '#/definitions/api.OutConfirmStartOfCalculating'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Api.OutConfirmStartOfCalculating'
+            $ref: '#/definitions/api.OutConfirmStartOfCalculating'
       summary: Confirm start calculating
       tags:
       - updates (used by calculation server)
@@ -156,7 +170,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutGetAllExpressions'
+            $ref: '#/definitions/api.OutGetAllExpressions'
       summary: Get all expressions
       tags:
       - expression
@@ -170,18 +184,18 @@ paths:
         name: expression
         required: true
         schema:
-          $ref: '#/definitions/Api.InPostExpression'
+          $ref: '#/definitions/api.InPostExpression'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutPostExpression'
+            $ref: '#/definitions/api.OutPostExpression'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Api.OutPostExpression'
+            $ref: '#/definitions/api.OutPostExpression'
       summary: Add expression
       tags:
       - expression
@@ -196,22 +210,22 @@ paths:
         name: id
         required: true
         schema:
-          $ref: '#/definitions/Api.InGetExpressionById'
+          $ref: '#/definitions/api.InGetExpressionByID'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutGetExpressionById'
+            $ref: '#/definitions/api.OutGetExpressionByID'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Api.OutGetExpressionById'
+            $ref: '#/definitions/api.OutGetExpressionByID'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Api.OutGetExpressionById'
+            $ref: '#/definitions/api.OutGetExpressionByID'
       summary: Get expression by id
       tags:
       - expression
@@ -219,14 +233,15 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get operations and times for calculation
+      description: 'Get operations and times for calculation as a map of operation
+        and time in milliseconds, {"+": 100,...}'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutGetOperationsAndTimes'
+            $ref: '#/definitions/api.OutGetOperationsAndTimes'
       summary: Get operations and times
       tags:
       - operations
@@ -241,8 +256,38 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutGetUpdates'
+            $ref: '#/definitions/api.OutGetUpdates'
       summary: Get updates
+      tags:
+      - updates (used by calculation server)
+  /keepAlive:
+    post:
+      consumes:
+      - application/json
+      description: Keep alive for expression to coordinate work of calculation servers
+      parameters:
+      - description: Expression
+        in: body
+        name: expression
+        required: true
+        schema:
+          $ref: '#/definitions/api.InKeepAlive'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OutPing'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.OutPing'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.OutPing'
+      summary: Keep alive
       tags:
       - updates (used by calculation server)
   /ping:
@@ -256,7 +301,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutPing'
+            $ref: '#/definitions/api.OutPing'
       summary: Ping
       tags:
       - ping
@@ -264,7 +309,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Set operations and times for calculation
+      description: 'Set operations and times for calculation as a map of operation
+        and time in milliseconds, {"+": 100,...}'
       parameters:
       - description: Operations and times
         in: body
@@ -280,11 +326,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutSetOperationsAndTimes'
+            $ref: '#/definitions/api.OutSetOperationsAndTimes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Api.OutSetOperationsAndTimes'
+            $ref: '#/definitions/api.OutSetOperationsAndTimes'
       summary: Set operations and times
       tags:
       - operations
@@ -292,29 +338,29 @@ paths:
     post:
       consumes:
       - application/json
-      description: Post result of calculation for expression
+      description: Post result of the calculation
       parameters:
       - description: Expression
         in: body
         name: expression
         required: true
         schema:
-          $ref: '#/definitions/Api.InPostResult'
+          $ref: '#/definitions/api.InPostResult'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Api.OutPostResult'
+            $ref: '#/definitions/api.OutPostResult'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/Api.OutPostResult'
+            $ref: '#/definitions/api.OutPostResult'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/Api.OutPostResult'
+            $ref: '#/definitions/api.OutPostResult'
       summary: Post result
       tags:
       - updates (used by calculation server)

@@ -1,4 +1,4 @@
-package expression_storage
+package expressionstorage
 
 import (
 	"errors"
@@ -87,24 +87,6 @@ func (e *ExpressionStorage) UpdateExpression(expression db.Expression) error {
 	return nil
 }
 
-//// PendingToReady changes expression from pendingExpressions to readyExpressions and sync with database.
-//func (e *ExpressionStorage) PendingToReady(expression db.Expression) error {
-//	if expression.Status != db.ExpressionReady {
-//		return errors.New("expression is not ready")
-//	}
-//
-//	if _, ok := e.pendingExpressions.Load(expression.ID); !ok {
-//		return errors.New("expression is not found")
-//	}
-//	e.pendingExpressions.Delete(expression.ID)
-//	e.readyExpressions.Store(expression.ID, expression)
-//	// sync with database
-//	if err := e.db.UpdateExpression(expression); err != nil {
-//		return err
-//	}
-//	return nil
-//}
-
 // IsExpressionWorking returns true if expression is in pendingExpressions and has Status == ExpressionWorking.
 func (e *ExpressionStorage) IsExpressionWorking(id int) (bool, error) {
 	if expression, ok := e.expressions.Load(id); ok {
@@ -132,13 +114,18 @@ func (e *ExpressionStorage) Delete(id int) error {
 	return nil
 }
 
-// keepAliveExpressions checks all expressions and if aliveExpiresAt is less than now, then change to not ready, so it will be calculated again via getUpdates.
+// keepAliveExpressions checks all expressions and if aliveExpiresAt is less than now, then change to not ready,
+// so it will be calculated again via getUpdates.
 func (e *ExpressionStorage) keepAliveExpressions() {
 	// check all expressions and if aliveExpiresAt is less than now, then change to not ready
 	for {
 		time.Sleep(e.checkAlive)
 		e.expressions.Range(func(key, value interface{}) bool {
-			expression := value.(db.Expression)
+			expression, ok := value.(db.Expression)
+			if !ok {
+				zap.S().Error("expression is not found")
+			}
+
 			if expression.Status == db.ExpressionWorking && expression.AliveExpiresAt < int(time.Now().Unix()) {
 				// change to not ready, so it will be calculated again
 				zap.S().Info(fmt.Sprintf("expression ID %v is not alive, change to not ready", expression.ID))

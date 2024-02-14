@@ -3,6 +3,19 @@ Distributed calculations written in Go language
 
 # Configure
 ***Before building and using calculation server and storage you must create `.env` file*** (specifies environmental variables, i.e. config). To do this you can use `.env.template` (`calculationServer/.env.template`, `storage/.env.template`) and just put your values there.
+## CalculationServer
+- `STORAGE_URL` - URL of storage server
+- `NUMBER_OF_CALCULATORS` - Number of calculators (workers) that will be created
+- `SEND_ALIVE_DURATION` - Duration of sending alive message to storage server
+
+## Storage
+- `POSTGRESQL_USER` - User for database
+- `POSTGRESQL_PASSWORD` - Password for database
+- `POSTGRESQL_DB` - Database name
+- `POSTGRESQL_HOST` - Host of database
+- `POSTGRESQL_PORT` - Port of database
+- `RESET_POSTGRESQL` - If `TRUE` then database will be reset on start of the storage server
+- `CHECK_SERVER_DURATION` - Duration of checking if calculation server is alive
 
 # Database Start
 ***Docker is required! ([install](https://docs.docker.com/engine/install/))***
@@ -33,26 +46,22 @@ go build .
 ```
 
 # API Documentation
+Documentation is always available (without rebuild of the documentation) available at http://localhost:8080/swagger/index.html
 Generate documentation (swagger):
 [install swag](https://github.com/swaggo/swag)
 ````shell
-cd calculationServer
-swag fmt 
-swag init
-cd ..
 cd storage
 swag fmt
 swag init
 ````
-Documentation is always available (without rebuild of the documentation) available at http://localhost:8080/swagger/index.html
 
-# Tests And Benchmarks
+# Tests
 For storage testing database is required (see **Database Start** section), also do not forget to change `calculationServer/tests/config_test.go` and `storage/tests/config_test.go` to specify where is postgresql database, number of calculators, and secret key.\
 To run tests:
 ````shell
 cd calculationServer
-go test -v ./tests/...
+go test -v ./tests_test/...
 cd ..
 cd storage
-go test -v ./tests/...
+go test -v ./tests_test/...
 ````

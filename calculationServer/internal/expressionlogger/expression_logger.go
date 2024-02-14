@@ -1,4 +1,4 @@
-package expression_logger
+package expressionlogger
 
 import (
 	"strings"

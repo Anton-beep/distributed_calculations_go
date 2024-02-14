@@ -1,7 +1,7 @@
 package tests_test
 
 import (
-	"calculationServer/pkg/expression_parser"
+	"calculationServer/pkg/expressionparser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -30,7 +30,7 @@ func TestConvertToRPN(t *testing.T) {
 		{"float", "0.2 + 0.2", []string{"0.2", "0.2", "+"}, false},
 	}
 
-	ep := expression_parser.New()
+	ep := expressionparser.New()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, err := ep.ConvertInRPN(tt.in)
@@ -48,18 +48,18 @@ func TestReadRPN(t *testing.T) {
 	type element struct {
 		name      string
 		in        []string
-		out       []expression_parser.OperationOrNum
+		out       []expressionparser.OperationOrNum
 		wantError bool
 	}
 
 	tests := []element{
-		{name: "simple", in: []string{"3", "4", "+"}, out: []expression_parser.OperationOrNum{
+		{name: "simple", in: []string{"3", "4", "+"}, out: []expressionparser.OperationOrNum{
 			{Data: 3},
 			{Data: 4},
 			{IsOperation: true, OperationID2: 1},
 		}},
 		{name: "complicated", in: []string{"3", "4", "2", "*", "1", "5", "-", "/", "+"},
-			out: []expression_parser.OperationOrNum{
+			out: []expressionparser.OperationOrNum{
 				{Data: 3},
 				{Data: 4},
 				{Data: 2},
@@ -76,7 +76,7 @@ func TestReadRPN(t *testing.T) {
 		{name: "unexpected symbol2", in: []string{"1", "2", "&"}, out: nil, wantError: true},
 	}
 
-	ep := expression_parser.New()
+	ep := expressionparser.New()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, err := ep.ReadRPN(tt.in)
@@ -93,19 +93,19 @@ func TestReadRPN(t *testing.T) {
 func TestCalculation(t *testing.T) {
 	type element struct {
 		name      string
-		in        []expression_parser.OperationOrNum
+		in        []expressionparser.OperationOrNum
 		out       float64
 		wantError bool
 	}
 	tests := []element{
-		{name: "simple", in: []expression_parser.OperationOrNum{
+		{name: "simple", in: []expressionparser.OperationOrNum{
 			{Data: 3},
 			{Data: 4},
 			{IsOperation: true, OperationID2: 1},
 		}, out: 7},
 	}
 
-	ep := expression_parser.New()
+	ep := expressionparser.New()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual, err := ep.CalculateRPNData(tt.in)
@@ -121,7 +121,7 @@ func TestCalculation(t *testing.T) {
 
 func TestFullProcess(t *testing.T) {
 	numberOfWorkers := 10
-	timeCfg := expression_parser.ExecTimeConfig{
+	timeCfg := expressionparser.ExecTimeConfig{
 		TimeAdd:      50,
 		TimeSubtract: 50,
 		TimeDivide:   50,
@@ -152,7 +152,7 @@ func TestFullProcess(t *testing.T) {
 		{"0.1 + 0.9", 1, false},
 	}
 
-	ep := expression_parser.New()
+	ep := expressionparser.New()
 	err := ep.SetNumberOfWorkers(numberOfWorkers)
 	require.NoError(t, err)
 	err = ep.SetExecTimes(timeCfg)
