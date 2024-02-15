@@ -24,15 +24,19 @@ type Client struct {
 	storageServer    string
 	expressionParser *expressionparser.ExpressionParser
 	keepAlive        time.Duration
+	serverName       string
 }
 
 type Expression struct {
-	ID             int     `json:"id"`
-	Value          string  `json:"value"`
-	Answer         float64 `json:"answer"`
-	Logs           string  `json:"logs"`
-	Status         int     `json:"ready"` // 0 - not ready, 1 - working, 2 - ready, 3 - error
-	AliveExpiresAt int     `json:"alive_experise_at"`
+	ID                 int     `json:"id"`
+	Value              string  `json:"value"`
+	Answer             float64 `json:"answer"`
+	Logs               string  `json:"logs"`
+	Status             int     `json:"ready"` // 0 - not ready, 1 - working, 2 - ready, 3 - error
+	AliveExpiresAt     int     `json:"alive_experise_at"`
+	CreationTime       string  `json:"creation_time"`
+	EndCalculationTime string  `json:"end_calculation_time"`
+	Servername         string  `json:"server_name"`
 }
 
 func New() (*Client, error) {
@@ -54,6 +58,11 @@ func New() (*Client, error) {
 		return nil, err
 	}
 	c.keepAlive = time.Duration(num) * time.Second
+
+	c.serverName = os.Getenv("CALCULATION_SERVER_NAME")
+	if c.serverName == "" {
+		c.serverName = "noname"
+	}
 	return c, nil
 }
 
@@ -78,6 +87,7 @@ func (c *Client) tryGetUpdates() (Expression, bool) {
 	if ok {
 		// server can calculate this expression
 		zap.S().Info("confirmed")
+		exp.Servername = c.serverName
 		return exp, true
 	}
 	time.Sleep(2000 * time.Millisecond)

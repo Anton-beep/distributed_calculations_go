@@ -162,6 +162,46 @@
                 }
             }
         },
+        "/getExpressionByServer": {
+            "get": {
+                "description": "Get expressions from storage by server name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "expression"
+                ],
+                "summary": "Get expression by server",
+                "parameters": [
+                    {
+                        "description": "Server name",
+                        "name": "server_name",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.InGetExpressionByServer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutGetExpressionByServer"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutGetExpressionByServer"
+                        }
+                    }
+                }
+            }
+        },
         "/getOperationsAndTimes": {
             "get": {
                 "description": "Get operations and times for calculation as a map of operation and time in milliseconds, {\"+\": 100,...}",
@@ -390,6 +430,17 @@
                 }
             }
         },
+        "api.InGetExpressionByServer": {
+            "type": "object",
+            "required": [
+                "server_name"
+            ],
+            "properties": {
+                "server_name": {
+                    "type": "string"
+                }
+            }
+        },
         "api.InKeepAlive": {
             "type": "object",
             "required": [
@@ -453,6 +504,20 @@
             "properties": {
                 "expression": {
                     "$ref": "#/definitions/db.Expression"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.OutGetExpressionByServer": {
+            "type": "object",
+            "properties": {
+                "expressions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/db.Expression"
+                    }
                 },
                 "message": {
                     "type": "string"
@@ -550,6 +615,9 @@
                 "ready": {
                     "description": "0 - not ready, 1 - working, 2 - ready, 3 - error",
                     "type": "integer"
+                },
+                "server_name": {
+                    "type": "string"
                 },
                 "value": {
                     "type": "string"

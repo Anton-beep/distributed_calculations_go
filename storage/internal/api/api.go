@@ -43,6 +43,7 @@ func (a *API) Start() *gin.Engine {
 	router.GET("/api/v1/expressionById", a.GetExpressionByID)
 	router.POST("/api/v1/postOperationsAndTimes", a.PostOperationsAndTimes)
 	router.GET("/api/v1/getOperationsAndTimes", a.GetOperationsAndTimes)
+	router.GET("/api/v1/getExpressionsByServer", a.GetExpressionsByServer)
 
 	// for calculation server
 	router.GET("/api/v1/getUpdates", a.GetUpdates)
@@ -50,7 +51,15 @@ func (a *API) Start() *gin.Engine {
 	router.POST("/api/v1/postResult", a.PostResult)
 	router.POST("/api/v1/keepAlive", a.KeepAlive)
 
+	// docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	return router
+}
+
+func (a *API) LoadInterface(router *gin.Engine) *gin.Engine {
+	router.LoadHTMLGlob("templates/*")
+	router.GET("", a.Index)
 
 	return router
 }

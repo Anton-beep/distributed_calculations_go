@@ -16,6 +16,7 @@ type Expression struct {
 	AliveExpiresAt     int     `db:"alive_experise_at" json:"alive_experise_at"`
 	CreationTime       string  `db:"creation_time" json:"creation_time"`
 	EndCalculationTime string  `db:"end_calculation_time" json:"end_calculation_time"`
+	Servername         string  `db:"server_name" json:"server_name"`
 }
 
 func (a *APIDb) GetAllExpressions() ([]Expression, error) {
@@ -35,7 +36,7 @@ func (a *APIDb) GetAllExpressions() ([]Expression, error) {
 	for rows.Next() {
 		expression := Expression{}
 		err = rows.Scan(&expression.ID, &expression.Value, &expression.Answer, &expression.Logs, &expression.Status,
-			&expression.AliveExpiresAt, &expression.CreationTime, &expression.EndCalculationTime)
+			&expression.AliveExpiresAt, &expression.CreationTime, &expression.EndCalculationTime, &expression.Servername)
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +50,7 @@ func (a *APIDb) GetExpressionByID(id int) (Expression, error) {
 	expression := Expression{}
 	err := a.db.QueryRow("SELECT * FROM expressions WHERE id=$1", id).
 		Scan(&expression.ID, &expression.Value, &expression.Answer, &expression.Logs, &expression.Status,
-			&expression.AliveExpiresAt, &expression.CreationTime, &expression.EndCalculationTime)
+			&expression.AliveExpiresAt, &expression.CreationTime, &expression.EndCalculationTime, &expression.Servername)
 	if err != nil {
 		return expression, err
 	}
@@ -59,9 +60,9 @@ func (a *APIDb) GetExpressionByID(id int) (Expression, error) {
 func (a *APIDb) AddExpression(expression Expression) (int, error) {
 	var id int
 	err := a.db.QueryRow("INSERT INTO expressions(value, answer, logs, ready, alive_expires_at, creation_time,"+
-		" end_calculation_time) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id",
+		" end_calculation_time, server_name) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
 		expression.Value, expression.Answer, expression.Logs, expression.Status, expression.AliveExpiresAt,
-		expression.CreationTime, expression.EndCalculationTime).Scan(&id)
+		expression.CreationTime, expression.EndCalculationTime, expression.Servername).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -70,9 +71,9 @@ func (a *APIDb) AddExpression(expression Expression) (int, error) {
 
 func (a *APIDb) UpdateExpression(expression Expression) error {
 	_, err := a.db.Exec("UPDATE expressions SET value=$1, answer=$2, logs=$3, ready=$4, alive_expires_at=$5,"+
-		" creation_time=$6, end_calculation_time=$7 WHERE id=$8",
+		" creation_time=$6, end_calculation_time=$7, server_name=$8 WHERE id=$9",
 		expression.Value, expression.Answer, expression.Logs, expression.Status, expression.AliveExpiresAt,
-		expression.CreationTime, expression.EndCalculationTime, expression.ID)
+		expression.CreationTime, expression.EndCalculationTime, expression.Servername, expression.ID)
 	return err
 }
 

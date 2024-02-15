@@ -140,3 +140,15 @@ func (e *ExpressionStorage) keepAliveExpressions() {
 		})
 	}
 }
+
+// GetByServer returns all expressions that have ServerName == server.
+func (e *ExpressionStorage) GetByServer(server string) []db.Expression {
+	expressions := make([]db.Expression, 0)
+	e.expressions.Range(func(_, value interface{}) bool {
+		if value.(db.Expression).Servername == server {
+			expressions = append(expressions, value.(db.Expression))
+		}
+		return true
+	})
+	return expressions
+}

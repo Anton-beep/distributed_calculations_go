@@ -288,3 +288,45 @@ func TestAlive(t *testing.T) {
 	assert.Equal(t, 1, out.Expression.ID)
 	assert.Greater(t, out.Expression.AliveExpiresAt, 0)
 }
+
+func TestGetServers(t *testing.T) {
+	d, err := db.New()
+	require.NoError(t, err)
+
+	a := api.New(d)
+	router := a.Start()
+
+	w := httptest.NewRecorder()
+	var in api.InPostExpression
+	in.Expression = "2+2"
+	body, _ := json.Marshal(in)
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expression", strings.NewReader(string(body)))
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	w = httptest.NewRecorder()
+	var in2 api.InConfirmStartOfCalculating
+	in2.Expression.ID = 1
+	in2.Expression.Servername = "server1"
+	body, _ = json.Marshal(in2)
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+
+	var in3 api.InGetExpressionByServer
+	in3.ServerName = "server1"
+	body, _ = json.Marshal(in3)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest(http.MethodGet, "/api/v1/getExpressionsByServer", strings.NewReader(string(body)))
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	var out2 api.OutGetExpressionByServer
+	err = json.Unmarshal(w.Body.Bytes(), &out2)
+	require.NoError(t, err)
+
+	assert.Equal(t, "ok", out2.Message)
+	assert.Equal(t, "server1", out2.Expressions[0].Servername)
+}

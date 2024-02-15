@@ -14,6 +14,13 @@ definitions:
     required:
     - id
     type: object
+  api.InGetExpressionByServer:
+    properties:
+      server_name:
+        type: string
+    required:
+    - server_name
+    type: object
   api.InKeepAlive:
     properties:
       expression:
@@ -55,6 +62,15 @@ definitions:
     properties:
       expression:
         $ref: '#/definitions/db.Expression'
+      message:
+        type: string
+    type: object
+  api.OutGetExpressionByServer:
+    properties:
+      expressions:
+        items:
+          $ref: '#/definitions/db.Expression'
+        type: array
       message:
         type: string
     type: object
@@ -118,6 +134,8 @@ definitions:
       ready:
         description: 0 - not ready, 1 - working, 2 - ready, 3 - error
         type: integer
+      server_name:
+        type: string
       value:
         type: string
     type: object
@@ -227,6 +245,32 @@ paths:
           schema:
             $ref: '#/definitions/api.OutGetExpressionByID'
       summary: Get expression by id
+      tags:
+      - expression
+  /getExpressionByServer:
+    get:
+      consumes:
+      - application/json
+      description: Get expressions from storage by server name
+      parameters:
+      - description: Server name
+        in: body
+        name: server_name
+        required: true
+        schema:
+          $ref: '#/definitions/api.InGetExpressionByServer'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OutGetExpressionByServer'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.OutGetExpressionByServer'
+      summary: Get expression by server
       tags:
       - expression
   /getOperationsAndTimes:

@@ -32,20 +32,19 @@ You can also start docker somehow else.
 
 When docker is running, you need to reset it, before program can use it, so on the first start of `storage/main.go` set in your `storage/.env` `RESET_POSTGRESQL=TRUE`. After the first start, do not forget to set `RESET_POSTGREQL` to `FALSE`, or it will wipe data.
 
-# Build
-**Storage:**
-```shell
-cd storage
-go build .
-```
+# Build and Run
 
-**Calculation Server:**
 ```shell
 cd calculationServer
-go build .
+go build -o ../out .
+cd ..
+cd storage
+go build -o ../out .
 ```
+You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env` and `calculationServer/.env`)or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
 
-# API Documentation
+
+# API Documentation for Storage
 Documentation is always available (without rebuild of the documentation) available at http://localhost:8080/swagger/index.html
 Generate documentation (swagger):
 [install swag](https://github.com/swaggo/swag)

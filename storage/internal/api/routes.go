@@ -410,3 +410,40 @@ func (a *API) KeepAlive(c *gin.Context) {
 
 	c.JSON(http.StatusOK, OutPing{Message: "ok"})
 }
+
+type InGetExpressionByServer struct {
+	ServerName string `json:"server_name" binding:"required"`
+}
+
+type OutGetExpressionByServer struct {
+	Expressions []db.Expression `json:"expressions"`
+	Message     string          `json:"message"`
+}
+
+// GetExpressionsByServer godoc
+//
+//	@Summary		Get expression by server
+//	@Description	Get expressions from storage by server name
+//	@Tags			expression
+//	@Accept			json
+//	@Produce		json
+//	@Param			server_name	body		InGetExpressionByServer	true	"Server name"
+//	@Success		200			{object}	OutGetExpressionByServer
+//	@Failure		400			{object}	OutGetExpressionByServer
+//	@Router			/getExpressionByServer [get]
+func (a *API) GetExpressionsByServer(c *gin.Context) {
+	var in InGetExpressionByServer
+	var out OutGetExpressionByServer
+	if err := c.ShouldBindJSON(&in); err != nil {
+		out.Message = err.Error()
+		zap.S().Error(out)
+		c.JSON(http.StatusBadRequest, out)
+		return
+	}
+
+	// get expressions from storage
+	expressions := a.expressions.GetByServer(in.ServerName)
+	out.Expressions = expressions
+	out.Message = "ok"
+	c.JSON(http.StatusOK, out)
+}
