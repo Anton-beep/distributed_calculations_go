@@ -51,7 +51,7 @@ docker run -p 8080:8080 -d --name storage -e POSTGRESQL_USER=user -e POSTGRESQL_
 cd ..
 cd ui-storage
 docker build -t ui-storage .
-docker run -p 3000:3000 -d --name ui-storage -e REACT_APP_STORAGE_API_URL=http://localhost:8080/api/v1 ui-storage
+docker run -p 3000:3000 -d --name ui-storage -e
 ```
 
 ### If you want to use .env files
