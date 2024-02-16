@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
+	"os"
+
 	// postgresql driver.
 	_ "storage/docs"
 	"storage/internal/api"
@@ -46,7 +48,11 @@ func main() {
 	}
 
 	// api
-	err = api.New(d).Start().Run(":8080")
+	addr := os.Getenv("STORAGE_URL")
+	if addr == "" {
+		addr = ":8080"
+	}
+	err = api.New(d).Start().Run(addr)
 	if err != nil {
 		zap.S().Fatal(err)
 	}
