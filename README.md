@@ -38,20 +38,15 @@ When docker is running, you need to reset it, before program can use it, so on t
 
 # Build and Run
 ## Docker
-### calculationServer
 ```shell
 cd calculationServer
 docker build -t calculation-server .
 docker run --env-file .env -d calculation-server
-```
-### storage
-```shell
+cd ..
 cd storage
 docker build -t storage .
 docker run --env-file .env -p 8080:8080 -d storage
-```
-### ui-storage
-```shell
+cd ..
 cd ui-storage
 docker build -t ui-storage .
 docker run --env-file .env -p 3000:3000 -d ui-storage

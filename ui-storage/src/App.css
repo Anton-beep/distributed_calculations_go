@@ -50,3 +50,8 @@ body {
     width: 40px;
     height: 40px;
 }
+
+.scrollable-div {
+    height: 500px;
+    overflow: auto;
+}
