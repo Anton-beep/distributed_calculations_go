@@ -3,7 +3,7 @@ FROM node:21-alpine3.18
 WORKDIR /app
 
 ENV PATH /app/node_modules/.bin:$PATH
-ENV REACT_APP_STORAGE_API_URL=http://host.docker.internal:8080
+ENV REACT_APP_STORAGE_API_URL=http://localhost:8080
 
 COPY package.json ./
 COPY package-lock.json ./
