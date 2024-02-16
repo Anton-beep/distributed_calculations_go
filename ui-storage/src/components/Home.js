@@ -23,6 +23,8 @@ export const Home = () => {
                     <Link to="/computingPowers">View computing powers</Link>
                 </li>
             </ul>
+            <p>if you started storage, you can view the <a href="http://localhost:8080/swagger/index.html">API documentation</a>
+            </p>
             <p>See more detailed description on the <a href="https://github.com/Anton-beep/distributed_calculations_go">GitHub repository</a>
             </p>
         </>

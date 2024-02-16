@@ -478,14 +478,14 @@ func (a *API) GetComputingPowers(c *gin.Context) {
 	servers := a.servers.GetAll()
 	for _, server := range servers {
 		operations := a.servers.GetExpressions(server)
-		IDs := make([]int, 0)
+		ids := make([]int, 0)
 		for _, expression := range operations {
-			IDs = append(IDs, expression.ID)
+			ids = append(ids, expression.ID)
 		}
 		out.Servers = append(out.Servers, struct {
 			ServerName            string `json:"server_name"`
 			CalculatedExpressions []int  `json:"calculated_expressions"`
-		}{ServerName: server, CalculatedExpressions: IDs})
+		}{ServerName: server, CalculatedExpressions: ids})
 	}
 
 	out.Message = "ok"

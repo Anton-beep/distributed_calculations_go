@@ -4,7 +4,7 @@ Distributed calculations written in Go language. This project assumes all standa
 # Configure
 ***Before building and using calculation server and storage you must create `.env` file*** (specifies environmental variables, i.e. config). To do this you can use `.env.template` (`calculationServer/.env.template`, `storage/.env.template`) and just put your values there.
 ## CalculationServer
-- `STORAGE_URL` - URL of storage server
+- `STORAGE_URL` - URL of storage server ***(If you are using docker to deploy calculation server write `http://host.docker.internal:<storage port>`!!!)***
 - `NUMBER_OF_CALCULATORS` - Number of calculators (workers) that will be created
 - `SEND_ALIVE_DURATION` - Duration of sending alive message to storage server
 - `CALCULATION_SERVER_NAME` - Name of a calculation server
@@ -13,10 +13,13 @@ Distributed calculations written in Go language. This project assumes all standa
 - `POSTGRESQL_USER` - User for database
 - `POSTGRESQL_PASSWORD` - Password for database
 - `POSTGRESQL_DB` - Database name
-- `POSTGRESQL_HOST` - Host of database
+- `POSTGRESQL_HOST` - Host of database ***(If you are using docker to deploy storage write `host.docker.internal`!!!)***
 - `POSTGRESQL_PORT` - Port of database
 - `RESET_POSTGRESQL` - If `TRUE` then database will be reset on start of the storage server
 - `CHECK_SERVER_DURATION` - Duration of checking if calculation server is alive
+
+## Ui-storage
+- `REACT_APP_STORAGE_API_URL` - URL of storage server
 
 # Database Start
 ***Docker is required! ([install](https://docs.docker.com/engine/install/))***
@@ -34,15 +37,47 @@ You can also start docker somehow else.
 When docker is running, you need to reset it, before program can use it, so on the first start of `storage/main.go` set in your `storage/.env` `RESET_POSTGRESQL=TRUE`. After the first start, do not forget to set `RESET_POSTGREQL` to `FALSE`, or it will wipe data.
 
 # Build and Run
+## Docker
+### calculationServer
+```shell
+cd calculationServer
+docker build -t calculation-server .
+docker run --env-file .env calculation-server
+```
+### storage
+```shell
+cd storage
+docker build -t storage .
+docker run --env-file .env -p 8080:8080 storage
+```
+### ui-storage
+```shell
+cd ui-storage
+docker build -t ui-storage .
+docker run --env-file .env -p 3000:3000 ui-storage
+```
 
+## Not Docker
+### Go
 ```shell
 cd calculationServer
 go build -o ../out .
 cd ..
 cd storage
 go build -o ../out .
+cd ..
 ```
 You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env` and `calculationServer/.env`)or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
+
+[Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) if you do not have it.
+### React
+```shell
+cd ui-storage
+npm install
+npm run build
+npm install -g serve
+serve -s build
+```
 
 
 # API Documentation for Storage
