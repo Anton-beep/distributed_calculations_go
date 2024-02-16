@@ -1,15 +1,15 @@
 # Distributed Calculations
-Distributed calculations written in Go language. This project assumes all standard mathematical operations (+, /, *, -) need a lot of time to be calculated. Therefore it would be logical to create a system which will organize a work of several machines to calculated given expressions as fast as possible.
+Distributed calculations written in Go language. This project assumes all standard mathematical operations (+, /, *, -) need a lot of time to be calculated. Therefore, it would be logical to create a system that will organize the work of several machines to calculated given expressions as fast as possible.
 
 # Configure
 ***Before building and using calculation server and storage you must create `.env` file*** (specifies environmental variables, i.e. config). To do this you can use `.env.template` (`calculationServer/.env.template`, `storage/.env.template`) and just put your values there.
-## CalculationServer
+### CalculationServer
 - `STORAGE_URL` - URL of storage server ***(If you are using docker to deploy calculation server write `http://host.docker.internal:<storage port>`!!!)***
 - `NUMBER_OF_CALCULATORS` - Number of calculators (workers) that will be created
 - `SEND_ALIVE_DURATION` - Duration of sending alive message to storage server
 - `CALCULATION_SERVER_NAME` - Name of a calculation server
 
-## Storage
+### Storage
 - `POSTGRESQL_USER` - User for database
 - `POSTGRESQL_PASSWORD` - Password for database
 - `POSTGRESQL_DB` - Database name
@@ -18,7 +18,7 @@ Distributed calculations written in Go language. This project assumes all standa
 - `RESET_POSTGRESQL` - If `TRUE` then database will be reset on start of the storage server
 - `CHECK_SERVER_DURATION` - Duration of checking if calculation server is alive
 
-## Ui-storage
+### Ui-storage
 - `REACT_APP_STORAGE_API_URL` - URL of storage server
 
 # Database Start
@@ -38,22 +38,39 @@ When docker is running, you need to reset it, before program can use it, so on t
 
 # Build and Run
 ## Docker
+### If you do not want to use .env files
 ```shell
 cd calculationServer
 docker build -t calculation-server .
-docker run --env-file .env -d calculation-server
+docker run -d --name calculation-server -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName calculation-server
 cd ..
 cd storage
 docker build -t storage .
-docker run --env-file .env -p 8080:8080 -d storage
+docker run -p 8080:8080 -d --name storage -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=password -e POSTGRESQL_DB=postgres -e POSTGRESQL_HOST=host.docker.internal -e POSTGRESQL_PORT=5432 -e RESET_POSTGRESQL=TRUE -e CHECK_SERVER_DURATION=5 storage
 cd ..
 cd ui-storage
 docker build -t ui-storage .
-docker run --env-file .env -p 3000:3000 -d ui-storage
+docker run -p 3000:3000 -d --name ui-storage -e REACT_APP_STORAGE_API_URL=http://localhost:8080/api/v1 ui-storage
+```
+
+### If you want to use .env files
+```shell
+cd calculationServer
+docker build -t calculation-server .
+docker run --env-file .env -d --name calculation-server calculation-server
+cd ..
+cd storage
+docker build -t storage .
+docker run --env-file .env -p 8080:8080 -d --name storage storage
+cd ..
+cd ui-storage
+docker build -t ui-storage .
+docker run --env-file .env -p 3000:3000 -d --name ui-storage ui-storage
 ```
 
 ## Not Docker
 ### Go
+[Install `go`](https://golang.org/doc/install)
 ```shell
 cd calculationServer
 go build -o ../out .

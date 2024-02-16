@@ -47,11 +47,15 @@ body {
 }
 
 .footer img {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
 }
 
 .scrollable-div {
-    height: 500px;
     overflow: auto;
+    padding-bottom: 40px;
+}
+
+main {
+    flex-grow: 1;
 }

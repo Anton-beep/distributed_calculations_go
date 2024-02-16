@@ -6,7 +6,7 @@ export const Home = () => {
         <>
             <h1>Home</h1>
             <p>This project assumes all standard mathematical operations (+, /, *, -) need a lot of time to be
-                calculated. Therefore it would be logical to create a system which will organize a work of several
+                calculated. Therefore, it would be logical to create a system that will organize the work of several
                 machines to calculated given expressions as fast as possible.</p>
             <p>There are 5 main functionalities to control the process:</p>
             <ul>
@@ -23,9 +23,11 @@ export const Home = () => {
                     <Link to="/computingPowers">View computing powers</Link>
                 </li>
             </ul>
-            <p>if you started storage, you can view the <a href="http://localhost:8080/swagger/index.html">API documentation</a>
+            <p>if you started storage, you can view the <a href="http://localhost:8080/swagger/index.html">API
+                documentation</a>
             </p>
-            <p>See more detailed description on the <a href="https://github.com/Anton-beep/distributed_calculations_go">GitHub repository</a>
+            <p>See more detailed description on the <a href="https://github.com/Anton-beep/distributed_calculations_go">GitHub
+                repository</a>
             </p>
         </>
     )

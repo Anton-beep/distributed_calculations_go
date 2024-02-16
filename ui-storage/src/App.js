@@ -19,13 +19,15 @@ function App() {
                     integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
                     crossOrigin="anonymous"></script>
             <Header/>
-            <Routes>
-                <Route path="/" element={<Home/>}/>
-                <Route path="/inputExpression" element={<InputExpression/>}/>
-                <Route path="/viewExpressions" element={<ViewExpressions/>}/>
-                <Route path="/operations" element={<Operations/>}/>
-                <Route path="/computingPowers" element={<ComputingPowers/>}/>
-            </Routes>
+            <main>
+                <Routes>
+                    <Route path="/" element={<Home/>}/>
+                    <Route path="/inputExpression" element={<InputExpression/>}/>
+                    <Route path="/viewExpressions" element={<ViewExpressions/>}/>
+                    <Route path="/operations" element={<Operations/>}/>
+                    <Route path="/computingPowers" element={<ComputingPowers/>}/>
+                </Routes>
+            </main>
             <Footer/>
         </>
     )

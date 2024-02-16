@@ -60,7 +60,7 @@ export const InputExpression = () => {
             <h1>Input Expression</h1>
             <form onSubmit={handleSubmit}>
                 <label>
-                    <input type="text" name="expression" onChange={handleChange} className="form-control" placeholder="2 + 2"/>
+                    <input type="text" name="expression" onChange={handleChange} className="form-control" placeholder="(2 + 2) + (2 + 2)"/>
                 </label>
                 <input type="submit" value="Submit" className="btn btn-secondary"/>
                 {showMessage()}

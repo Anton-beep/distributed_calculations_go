@@ -14,6 +14,21 @@ export const ComputingPowers = () => {
             .catch(err => console.log(err));
     }, []);
 
+    const showServers = () => {
+        if (servers !== null) {
+            return servers.map((server, index) => {
+                server.calculated_expressions.sort((a, b) => (a > b) ? -1 : 1)
+                return (
+                    <ul className="list-group list-group-horizontal" key={index}>
+                        <li className="list-group-item list-group-item-primary">{server.server_name}</li>
+                        <li className="list-group-item list-group-item-primary">{server.calculated_expressions.join("; ")}</li>
+                    </ul>
+                )
+            })
+        }
+        return null;
+    }
+
     return (
         <>
             <title>View Computing Powers</title>
@@ -23,13 +38,7 @@ export const ComputingPowers = () => {
                     <li className="list-group-item">Server Name</li>
                     <li className="list-group-item">Calculated Expressions IDs</li>
                 </ul>
-                {servers !== null ? servers.map((server, index) => (
-                        <ul className="list-group list-group-horizontal" key={index}>
-                            <li className="list-group-item list-group-item-primary">{server.server_name}</li>
-                            <li className="list-group-item list-group-item-primary">{server.calculated_expressions.join("; ")}</li>
-                        </ul>
-                    )
-                ) : null}
+                {showServers()}
             </div>
         </>
     )
