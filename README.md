@@ -26,7 +26,7 @@ Create `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specif
 ***Docker is required! ([install](https://docs.docker.com/engine/install/))***
 
 ```shell
-docker run --name <name for docker container> -p 5432:5432 -e  POSTGRES_USER=<your database user> -e POSTGRES_PASSWORD=<your password for database> -d postgres:16
+docker run --name db -p 5432:5432 -e  POSTGRES_USER=user -e POSTGRES_PASSWORD=password -d postgres:16
 ```
 
 You can also specify local directory for database storage using: `-v <local path>:/var/lib/postgresql/data postgres:16`
