@@ -10,3 +10,15 @@ func (a *API) Index(c *gin.Context) {
 		"title": "Main website",
 	})
 }
+
+func (a *API) InputExpression(c *gin.Context) {
+}
+
+func (a *API) AllExpressions(c *gin.Context) {
+}
+
+func (a *API) Operations(c *gin.Context) {
+}
+
+func (a *API) ComputingPower(c *gin.Context) {
+}

@@ -301,6 +301,9 @@ func (a *API) ConfirmStartCalculating(c *gin.Context) {
 		return
 	}
 
+	// add server
+	a.servers.Add(in.Expression.Servername)
+
 	out.Confirm = true
 	out.Message = "ok"
 	c.JSON(http.StatusOK, out)
@@ -359,6 +362,9 @@ func (a *API) PostResult(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, out)
 		return
 	}
+
+	// add server
+	a.servers.Add(in.Expression.Servername)
 
 	out.Message = "ok"
 	c.JSON(http.StatusOK, out)
@@ -444,6 +450,44 @@ func (a *API) GetExpressionsByServer(c *gin.Context) {
 	// get expressions from storage
 	expressions := a.expressions.GetByServer(in.ServerName)
 	out.Expressions = expressions
+	out.Message = "ok"
+	c.JSON(http.StatusOK, out)
+}
+
+type OutGetComputingPowers struct {
+	Servers []struct {
+		ServerName            string `json:"server_name"`
+		CalculatedExpressions []int  `json:"calculated_expressions"`
+	} `json:"servers"`
+	Message string `json:"message"`
+}
+
+// GetComputingPowers godoc
+//
+//	@Summary		Get computing powers
+//	@Description	Get computing powers from storage
+//	@Tags			computing powers
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	OutGetComputingPowers
+//	@Router			/getComputingPowers [get]
+func (a *API) GetComputingPowers(c *gin.Context) {
+	var out OutGetComputingPowers
+
+	// get computing powers
+	servers := a.servers.GetAll()
+	for _, server := range servers {
+		operations := a.servers.GetExpressions(server)
+		IDs := make([]int, 0)
+		for _, expression := range operations {
+			IDs = append(IDs, expression.ID)
+		}
+		out.Servers = append(out.Servers, struct {
+			ServerName            string `json:"server_name"`
+			CalculatedExpressions []int  `json:"calculated_expressions"`
+		}{ServerName: server, CalculatedExpressions: IDs})
+	}
+
 	out.Message = "ok"
 	c.JSON(http.StatusOK, out)
 }

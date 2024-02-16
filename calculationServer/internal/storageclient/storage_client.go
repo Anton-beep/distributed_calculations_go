@@ -80,6 +80,7 @@ func (c *Client) tryGetUpdates() (Expression, bool) {
 	}
 	exp := expressions[0]
 	zap.S().Infof("got expression: %v", exp)
+	exp.Servername = c.serverName
 	ok, err := c.TryToConfirm(exp)
 	if err != nil {
 		zap.S().Error(err)
@@ -87,7 +88,6 @@ func (c *Client) tryGetUpdates() (Expression, bool) {
 	if ok {
 		// server can calculate this expression
 		zap.S().Info("confirmed")
-		exp.Servername = c.serverName
 		return exp, true
 	}
 	time.Sleep(2000 * time.Millisecond)

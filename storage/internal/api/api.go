@@ -1,11 +1,13 @@
 package api
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 	"os"
+	"storage/internal/availableservers"
 	"storage/internal/db"
 	"storage/internal/expressionstorage"
 	"strconv"
@@ -15,6 +17,7 @@ import (
 type API struct {
 	db             *db.APIDb
 	expressions    *expressionstorage.ExpressionStorage
+	servers        *availableservers.AvailableServers
 	execTimeConfig ExecTimeConfig
 	checkAlive     int
 }
@@ -29,11 +32,16 @@ func New(_db *db.APIDb) *API {
 		expressions: expressionstorage.New(_db, time.Duration(num)*time.Second),
 		checkAlive:  num,
 	}
+	newAPI.servers = availableservers.New(newAPI.expressions)
 	return newAPI
 }
 
 func (a *API) Start() *gin.Engine {
 	router := gin.Default()
+
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	router.Use(cors.New(config))
 
 	router.GET("/api/v1/ping", a.Ping)
 
@@ -44,6 +52,7 @@ func (a *API) Start() *gin.Engine {
 	router.POST("/api/v1/postOperationsAndTimes", a.PostOperationsAndTimes)
 	router.GET("/api/v1/getOperationsAndTimes", a.GetOperationsAndTimes)
 	router.GET("/api/v1/getExpressionsByServer", a.GetExpressionsByServer)
+	router.GET("/api/v1/getComputingPowers", a.GetComputingPowers)
 
 	// for calculation server
 	router.GET("/api/v1/getUpdates", a.GetUpdates)
@@ -53,13 +62,6 @@ func (a *API) Start() *gin.Engine {
 
 	// docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-	return router
-}
-
-func (a *API) LoadInterface(router *gin.Engine) *gin.Engine {
-	router.LoadHTMLGlob("templates/*")
-	router.GET("", a.Index)
 
 	return router
 }

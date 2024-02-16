@@ -1,5 +1,5 @@
 # Distributed Calculations
-Distributed calculations written in Go language
+Distributed calculations written in Go language. This project assumes all standard mathematical operations (+, /, *, -) need a lot of time to be calculated. Therefore it would be logical to create a system which will organize a work of several machines to calculated given expressions as fast as possible.
 
 # Configure
 ***Before building and using calculation server and storage you must create `.env` file*** (specifies environmental variables, i.e. config). To do this you can use `.env.template` (`calculationServer/.env.template`, `storage/.env.template`) and just put your values there.
@@ -7,6 +7,7 @@ Distributed calculations written in Go language
 - `STORAGE_URL` - URL of storage server
 - `NUMBER_OF_CALCULATORS` - Number of calculators (workers) that will be created
 - `SEND_ALIVE_DURATION` - Duration of sending alive message to storage server
+- `CALCULATION_SERVER_NAME` - Name of a calculation server
 
 ## Storage
 - `POSTGRESQL_USER` - User for database

@@ -58,6 +58,22 @@ definitions:
       message:
         type: string
     type: object
+  api.OutGetComputingPowers:
+    properties:
+      data:
+        items:
+          properties:
+            calculated_expressions:
+              items:
+                type: integer
+              type: array
+            server_name:
+              type: string
+          type: object
+        type: array
+      message:
+        type: string
+    type: object
   api.OutGetExpressionByID:
     properties:
       expression:
@@ -247,6 +263,21 @@ paths:
       summary: Get expression by id
       tags:
       - expression
+  /getComputingPowers:
+    get:
+      consumes:
+      - application/json
+      description: Get computing powers from storage
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OutGetComputingPowers'
+      summary: Get computing powers
+      tags:
+      - operations
   /getExpressionByServer:
     get:
       consumes:

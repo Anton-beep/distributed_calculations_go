@@ -1,0 +1,52 @@
+.list-group-horizontal {
+    display: flex;
+}
+
+.list-group-horizontal .list-group-item {
+    flex: 1;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    background-color: #f8f9fa;
+    padding: 20px;
+    text-align: center;
+    font-size: 30px;
+    color: #343a40;
+}
+
+.header a {
+    flex: 1;
+    text-align: center;
+}
+
+.btn {
+    padding: 10px 20px;  /* vertical padding and horizontal padding */
+    margin: 20px;  /* small gap around the button */
+}
+
+body {
+    padding-left: 20px;  /* or any other value */
+}
+
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #f8f9fa;
+    color: black;
+    text-align: center;
+    padding: 10px 0;
+}
+
+.footer a {
+    color: black;
+    text-decoration: none;
+}
+
+.footer img {
+    width: 40px;
+    height: 40px;
+}

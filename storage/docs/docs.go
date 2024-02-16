@@ -168,6 +168,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/getComputingPowers": {
+            "get": {
+                "description": "Get computing powers from storage",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "operations"
+                ],
+                "summary": "Get computing powers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutGetComputingPowers"
+                        }
+                    }
+                }
+            }
+        },
         "/getExpressionByServer": {
             "get": {
                 "description": "Get expressions from storage by server name",
@@ -498,6 +521,31 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/db.Expression"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.OutGetComputingPowers": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "calculated_expressions": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            "server_name": {
+                                "type": "string"
+                            }
+                        }
                     }
                 },
                 "message": {

@@ -46,8 +46,7 @@ func main() {
 	}
 
 	// api
-	r := api.New(d)
-	err = r.Start().Run(":8080")
+	err = api.New(d).Start().Run(":8080")
 	if err != nil {
 		zap.S().Fatal(err)
 	}
