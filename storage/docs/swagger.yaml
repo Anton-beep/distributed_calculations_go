@@ -60,7 +60,9 @@ definitions:
     type: object
   api.OutGetComputingPowers:
     properties:
-      data:
+      message:
+        type: string
+      servers:
         items:
           properties:
             calculated_expressions:
@@ -71,8 +73,6 @@ definitions:
               type: string
           type: object
         type: array
-      message:
-        type: string
     type: object
   api.OutGetExpressionByID:
     properties:
@@ -277,7 +277,7 @@ paths:
             $ref: '#/definitions/api.OutGetComputingPowers'
       summary: Get computing powers
       tags:
-      - operations
+      - computing powers
   /getExpressionByServer:
     get:
       consumes:

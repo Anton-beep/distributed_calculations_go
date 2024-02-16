@@ -178,7 +178,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "operations"
+                    "computing powers"
                 ],
                 "summary": "Get computing powers",
                 "responses": {
@@ -531,7 +531,10 @@ const docTemplate = `{
         "api.OutGetComputingPowers": {
             "type": "object",
             "properties": {
-                "data": {
+                "message": {
+                    "type": "string"
+                },
+                "servers": {
                     "type": "array",
                     "items": {
                         "type": "object",
@@ -547,9 +550,6 @@ const docTemplate = `{
                             }
                         }
                     }
-                },
-                "message": {
-                    "type": "string"
                 }
             }
         },

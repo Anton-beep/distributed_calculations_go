@@ -172,7 +172,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "operations"
+                    "computing powers"
                 ],
                 "summary": "Get computing powers",
                 "responses": {
@@ -525,7 +525,10 @@
         "api.OutGetComputingPowers": {
             "type": "object",
             "properties": {
-                "data": {
+                "message": {
+                    "type": "string"
+                },
+                "servers": {
                     "type": "array",
                     "items": {
                         "type": "object",
@@ -541,9 +544,6 @@
                             }
                         }
                     }
-                },
-                "message": {
-                    "type": "string"
                 }
             }
         },
