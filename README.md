@@ -1,8 +1,9 @@
 # Distributed Calculations
 Distributed calculations written in Go language. This project assumes all standard mathematical operations (+, /, *, -) need a lot of time to be calculated. Therefore, it would be logical to create a system that will organize the work of several machines to calculated given expressions as fast as possible.
 
-# Configure
-***Before building and using calculation server and storage you must create `.env` file*** (specifies environmental variables, i.e. config). To do this you can use `.env.template` (`calculationServer/.env.template`, `storage/.env.template`) and just put your values there.
+# Configure (using .env)
+You can skip this part, if you will use docker to deploy the project.\
+Create `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specifies environmental variables, i.e. config). To do this you can use `.env.template` (`calculationServer/.env.template`, `storage/.env.template`, `ui-storage/.env`) and just put your values there.
 ### CalculationServer
 - `STORAGE_URL` - URL of storage server ***(If you are using docker to deploy calculation server write `http://host.docker.internal:<storage port>`!!!)***
 - `NUMBER_OF_CALCULATORS` - Number of calculators (workers) that will be created
@@ -54,6 +55,7 @@ docker run -p 3000:3000 -d --name ui-storage -e REACT_APP_STORAGE_API_URL=http:/
 ```
 
 ### If you want to use .env files
+Configure three `.env` files (see **Configure (using .env)** section) and then run:
 ```shell
 cd calculationServer
 docker build -t calculation-server .
