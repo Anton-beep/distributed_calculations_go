@@ -58,6 +58,7 @@ export const InputExpression = () => {
     return (
         <>
             <h1>Input Expression</h1>
+            <p>Supported operations: +, -, *, /</p>
             <form onSubmit={handleSubmit}>
                 <label>
                     <input type="text" name="expression" onChange={handleChange} className="form-control" placeholder="(2 + 2) + (2 + 2)"/>

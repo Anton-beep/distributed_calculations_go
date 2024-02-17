@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
-	"os"
-
 	// postgresql driver.
 	_ "storage/docs"
 	"storage/internal/api"
@@ -33,7 +32,7 @@ func InitLogger(debug bool) {
 // @BasePath	/api/v1.
 func main() {
 	InitLogger(true)
-	// gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 
 	// .env
 	err := godotenv.Load()
@@ -48,11 +47,7 @@ func main() {
 	}
 
 	// api
-	addr := os.Getenv("STORAGE_URL")
-	if addr == "" {
-		addr = ":8080"
-	}
-	err = api.New(d).Start().Run(addr)
+	err = api.New(d).Start().Run(":8080")
 	if err != nil {
 		zap.S().Fatal(err)
 	}
