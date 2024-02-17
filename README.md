@@ -121,6 +121,13 @@ To apply concurrent calculations, RPN is parsed to instructions, which contains 
 Pool organizes the work of several workers (calculators) that calculate the instructions.\
 When all instructions are calculated, the result is sent to the storage server.
 
+# Screenshots
+![home](assets/home.png)
+![inputExpression](assets/inputExpression.png)
+![viewExpressions](assets/viewExpressions.png)
+![viewOperations](assets/viewOperations.png)
+![computingPowers](assets/computingPowers.png)
+
 # Tests
 For storage testing database is required (see **Database Start** section), also do not forget to change `calculationServer/tests/config_test.go` and `storage/tests/config_test.go` to specify where is postgresql database, number of calculators, and secret key.\
 To run tests:
