@@ -71,9 +71,12 @@ docker run --env-file .env -p 3000:3000 -d --name ui-storage ui-storage
 ```
 
 ## Not Docker
+If you have error in powershell `cannot be loaded because running scripts is disabled on this
+system.` you can [fix it](https://stackoverflow.com/questions/54776324/powershell-bug-execution-of-scripts-is-disabled-on-this-system) or run commands in CMD.
 ### Go
 [Install `go`](https://golang.org/doc/install)
 ```shell
+mkdir out
 cd calculationServer
 go build -o ../out .
 cd ..
