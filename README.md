@@ -81,7 +81,7 @@ cd storage
 go build -o ../out .
 cd ..
 ```
-You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env` and `calculationServer/.env`)or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
+You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env` and `calculationServer/.env`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
 
 [Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) if you do not have it.
 ### React
