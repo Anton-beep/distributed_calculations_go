@@ -116,6 +116,11 @@ swag init
 ### Process inside the calculation server
 ![diagram-calculation-server](assets/diagram-calculation-server.svg)
 
+Expression converts to RPN (Reversed Polish Notation) notation using [Shunting yard algorithm](https://en.wikipedia.org/wiki/Shunting_yard_algorithm), so it can be calculated using a stack.\
+To apply concurrent calculations, RPN is parsed to instructions, which contains information such as index of the first number in the instructions slice, index of the second number in the instructions slice, operation type (add, subtract, multiply, divide).\
+Pool organizes the work of several workers (calculators) that calculate the instructions.\
+When all instructions are calculated, the result is sent to the storage server.
+
 # Tests
 For storage testing database is required (see **Database Start** section), also do not forget to change `calculationServer/tests/config_test.go` and `storage/tests/config_test.go` to specify where is postgresql database, number of calculators, and secret key.\
 To run tests:
