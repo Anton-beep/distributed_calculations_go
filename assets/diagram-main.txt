@@ -1,0 +1,11 @@
+sequenceDiagram
+    Calculation Server->>Storage: Get updates
+    Storage->>Calculation Server: Send updates
+    Calculation Server->>Calculation Server: Check updates
+    Calculation Server->>Storage: Confirm expression to start calculations
+    Storage->>Calculation Server: Confirmed that another server didn't take this expression
+    create actor User
+    Storage->>User: Server started calculations
+    Calculation Server->>Calculation Server: Calculations
+    Calculation Server->>Storage: Post result
+    Storage->>User: Result and logs

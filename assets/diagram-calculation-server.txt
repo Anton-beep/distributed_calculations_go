@@ -1,0 +1,9 @@
+flowchart TD
+    A(Expression, string) --> B(Reversed Polish Notation)
+    B --> C(Instructions)
+    C --> D(Pool)
+    D --> E(Operation1)
+    D --> F(Operation2)
+    E --> G(Operation3)
+    F --> G
+    G --> H(Result)

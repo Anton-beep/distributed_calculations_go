@@ -104,6 +104,15 @@ swag fmt
 swag init
 ````
 
+# How does it work
+![diagram-main](assets/diagram-main.svg)
+Storage is a hosted server that stores all the data about calculations and calculation servers. It also checks if calculation servers are alive.\
+Calculation server is a client that interacts with storage. Using getUpdates endpoint it gets all the calculations that are not calculated yet. Because there is possibly more than one calculation server that runs at the same time, calculation server asks for a confirmation from the storage, storage give this confirmation only ones to the first calculation server that asks for it. While calculation server is working with expression, it sends messages to storage to indicate that calculation server is online and working. If calculation server is not online, storage will pass an expression to another calculation server.\
+User can see the moment of confirmation and the result of the calculation in the UI.
+
+### Process inside the calculation server
+![diagram-calculation-server](assets/diagram-calculation-server.svg)
+
 # Tests
 For storage testing database is required (see **Database Start** section), also do not forget to change `calculationServer/tests/config_test.go` and `storage/tests/config_test.go` to specify where is postgresql database, number of calculators, and secret key.\
 To run tests:
