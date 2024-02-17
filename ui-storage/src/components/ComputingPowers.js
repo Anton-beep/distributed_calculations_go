@@ -5,11 +5,16 @@ export const ComputingPowers = () => {
     const [servers, setServers] = useState(null)
 
     useEffect(() => {
-        fetch(process.env.REACT_APP_STORAGE_API_URL + "/getComputingPowers")
+        let addr;
+        if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
+            addr = process.env.REACT_APP_STORAGE_API_URL + "/getComputingPowers"
+        } else {
+            addr = "http://localhost:8080/api/v1/getComputingPowers"
+        }
+        fetch(addr)
             .then(response => response.json())
             .then(data => {
                 setServers(data.servers)
-                console.log(data)
             })
             .catch(err => console.log(err));
     }, []);

@@ -5,17 +5,20 @@ export const ViewExpressions = () => {
     const [expressions, setExpressions] = useState([])
 
     useEffect(() => {
-        fetch(process.env.REACT_APP_STORAGE_API_URL + "/expression")
+        let addr;
+        if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
+            addr = process.env.REACT_APP_STORAGE_API_URL + "/expression"
+        } else {
+            addr = "http://localhost:8080/api/v1/expression"
+        }
+        fetch(addr)
             .then(response => response.json())
             .then(data => {
                 data.expressions.sort((a, b) => (a.id > b.id) ? -1 : 1)
-                console.log(process.env.REACT_APP_STORAGE_API_URL + "/expression")
                 setExpressions(data.expressions)
             })
             .catch(err => {
                 console.log(err)
-                console.log(process.env.REACT_APP_STORAGE_API_URL)
-                console.log("http://host.docker.internal:8080/api/v1")
             });
     }, []);
 

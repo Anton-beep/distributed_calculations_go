@@ -32,7 +32,13 @@ export const InputExpression = () => {
     const handleSubmit = (event) => {
         event.preventDefault();
         if (message === '') {
-            fetch(process.env.REACT_APP_STORAGE_API_URL + "/expression", {
+            let addr;
+            if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
+                addr = process.env.REACT_APP_STORAGE_API_URL + "/expression"
+            } else {
+                addr = "http://localhost:8080/api/v1/expression"
+            }
+            fetch(addr, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

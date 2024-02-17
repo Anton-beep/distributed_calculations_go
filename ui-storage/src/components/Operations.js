@@ -8,11 +8,16 @@ export const Operations = () => {
     const [mainError, setMainError] = useState(false)
 
     useEffect(() => {
-        fetch(process.env.REACT_APP_STORAGE_API_URL + "/getOperationsAndTimes")
+        let addr;
+        if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
+            addr = process.env.REACT_APP_STORAGE_API_URL + "/getOperationsAndTimes"
+        } else {
+            addr = "http://localhost:8080/api/v1/getOperationsAndTimes"
+        }
+        fetch(addr)
             .then(response => response.json())
             .then(data => {
                 setOperations(data.data)
-                console.log(data.data)
             })
             .catch(err => {
                 setMainError(true);

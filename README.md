@@ -72,7 +72,8 @@ docker run --env-file .env -p 3000:3000 -d --name ui-storage ui-storage
 
 ## Not Docker
 If you have error in powershell `cannot be loaded because running scripts is disabled on this
-system.` you can [fix it](https://stackoverflow.com/questions/54776324/powershell-bug-execution-of-scripts-is-disabled-on-this-system) or run commands in CMD.
+system.` you can [fix it](https://stackoverflow.com/questions/54776324/powershell-bug-execution-of-scripts-is-disabled-on-this-system) or run commands in CMD.\
+You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env` and `calculationServer/.env`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
 ### Go
 [Install `go`](https://golang.org/doc/install)
 ```shell
@@ -84,9 +85,8 @@ cd storage
 go build -o ../out .
 cd ..
 ```
-You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env` and `calculationServer/.env`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
 
-[Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) if you do not have it.
+[Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) if you do not have it. Don't forget about `.env`
 ### React
 ```shell
 cd ui-storage
