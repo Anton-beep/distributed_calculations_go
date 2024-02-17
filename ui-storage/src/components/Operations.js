@@ -76,7 +76,13 @@ export const Operations = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        fetch(process.env.REACT_APP_STORAGE_API_URL + "/postOperationsAndTimes", {
+        let addr;
+        if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
+            addr = process.env.REACT_APP_STORAGE_API_URL + "/postOperationsAndTimes"
+        } else {
+            addr = "http://localhost:8080/api/v1/postOperationsAndTimes"
+        }
+        fetch(addr, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
