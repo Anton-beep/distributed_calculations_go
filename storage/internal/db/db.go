@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
 	// postgresql driver.
@@ -18,6 +19,7 @@ func New() (*APIDb, error) {
 	// this is for test purposes
 	err := godotenv.Load("../.env")
 	if err != nil {
+		zap.S().Warn("this warning is normal if you are running the server in production")
 		zap.S().Warn(err)
 	}
 
@@ -40,17 +42,21 @@ func New() (*APIDb, error) {
 
 	a := &APIDb{db}
 	// database will be wiped if in .env variable RESET_POSTGRESQL = TRUE
-	a.ResetDatabase()
+	if os.Getenv("RESET_POSTGRESQL") != "TRUE" {
+		if res, _ := a.IsDBCorrect(); res {
+			zap.S().Info("database is correct")
+		} else {
+			zap.S().Warn("database is not correct, resetting")
+			a.ResetDatabase()
+		}
+	} else {
+		zap.S().Warn("resetting database because of RESET_POSTGRESQL = TRUE")
+		a.ResetDatabase()
+	}
 	return a, nil
 }
 
 func (a *APIDb) ResetDatabase() {
-	if os.Getenv("RESET_POSTGRESQL") != "TRUE" {
-		return
-	}
-
-	zap.S().Warn("resetting database")
-
 	_, err := a.db.Exec("DROP TABLE IF EXISTS expressions")
 	if err != nil {
 		zap.S().Fatal(err)
@@ -60,4 +66,46 @@ func (a *APIDb) ResetDatabase() {
 	if err != nil {
 		zap.S().Fatal(err)
 	}
+}
+
+func (a *APIDb) IsDBCorrect() (bool, error) {
+	var exists bool
+	err := a.db.QueryRow("SELECT EXISTS (SELECT FROM pg_tables WHERE tablename = 'expressions')").Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	if !exists {
+		return false, errors.New("table expressions does not exist")
+	}
+
+	// Check if table has correct fields
+	rows, err := a.db.Query("SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = 'expressions'")
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	// Define the correct fields
+	correctFields := map[string]bool{
+		"id": true, "value": true, "answer": true, "logs": true,
+		"ready": true, "alive_expires_at": true, "creation_time": true,
+		"end_calculation_time": true, "server_name": true,
+	}
+
+	for rows.Next() {
+		var columnName string
+		if err = rows.Scan(&columnName); err != nil {
+			return false, err
+		}
+		if _, ok := correctFields[columnName]; !ok {
+			return false, fmt.Errorf("unexpected column %s in table expressions", columnName)
+		}
+		delete(correctFields, columnName)
+	}
+
+	if len(correctFields) > 0 {
+		return false, fmt.Errorf("missing columns in table expressions: %v", correctFields)
+	}
+
+	return true, nil
 }

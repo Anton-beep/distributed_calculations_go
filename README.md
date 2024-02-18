@@ -16,7 +16,7 @@ Create `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specif
 - `POSTGRESQL_DB` - Database name
 - `POSTGRESQL_HOST` - Host of database ***(If you are using docker to deploy storage write `host.docker.internal`!!!)***
 - `POSTGRESQL_PORT` - Port of database
-- `RESET_POSTGRESQL` - If `TRUE` then database will be reset on start of the storage server
+- `RESET_POSTGRESQL` - If `TRUE` then database will be reset (drop table expressions) on start of the storage server
 - `CHECK_SERVER_DURATION` - Duration of checking if calculation server is alive
 
 ### Ui-storage
@@ -37,9 +37,11 @@ You can also start docker somehow else.
 
 When docker is running, you need to reset it, before program can use it, so on the first start of `storage/main.go` set in your `storage/.env` `RESET_POSTGRESQL=TRUE`. After the first start, do not forget to set `RESET_POSTGREQL` to `FALSE`, or it will wipe data.
 
+***If you want to use exist database, make sure that you don't have table expressions! Storage will reset this table on a start!***
+
 # Build and Run
 ## Release
-See release section on github if your os is windows, if linux see build section.
+See release section on github if your os is windows, if linux see build section below.
 ## Docker
 ### If you do not want to use .env files
 ```shell
@@ -74,7 +76,7 @@ docker run --env-file .env -p 3000:3000 -d --name ui-storage ui-storage
 
 ## Not Docker
 If you have error in powershell `cannot be loaded because running scripts is disabled on this
-system.` you can [fix it](https://stackoverflow.com/questions/54776324/powershell-bug-execution-of-scripts-is-disabled-on-this-system) or run commands in CMD.\
+system.` you can [fix it](https://stackoverflow.com/questions/54776324/powershell-bug-execution-of-scripts-is-disabled-on-this-system) or run commands in CMD.
 ### Go
 [Install `go`](https://golang.org/doc/install)
 ```shell
@@ -98,16 +100,17 @@ cd ..
 ```
 You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env` and `calculationServer/.env`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
 ### Run (win):
-This will start server on `localhost:8080` and UI on `localhost:3000`:
 ```shell
 cd out
 .\storage.exe
 ```
-To start calculation server (to change settings use `.env`):
 ```shell
 cd out
 .\calculationServer.exe
 ```
+
+API is available at `http://localhost:8080/api/v1` and UI at `http://localhost:3000`.\
+You can start new calculation server by running `.\calculationServer.exe` in another terminal, if you want to configure it edit `.env`
 
 # API Documentation for Storage
 Documentation is always available (without rebuild of the documentation) available at http://localhost:8080/swagger/index.html
