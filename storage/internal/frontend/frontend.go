@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 const FSPATH = "./build/"
@@ -32,7 +33,15 @@ func ServeFrontend() {
 		}
 		fs.ServeHTTP(w, r)
 	})
-	err := http.ListenAndServe(":3000", nil)
+
+	server := &http.Server{
+		Addr:         ":3000",
+		Handler:      nil, // use http.DefaultServeMux
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	err := server.ListenAndServe()
 	if err != nil {
 		zap.S().Fatal(err)
 	}

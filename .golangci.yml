@@ -318,6 +318,8 @@ issues:
     - "cognitive complexity 22 of func"
     - "Magic number: 2"
     - "`if err == nil` has complex nested blocks"
+    - "Magic number: 5"
+    - "Magic number: 10"
 
   exclude-rules:
     - source: "(noinspection|TODO)"

@@ -103,6 +103,10 @@ func (a *APIDb) IsDBCorrect() (bool, error) {
 		delete(correctFields, columnName)
 	}
 
+	if err = rows.Err(); err != nil {
+		return false, err
+	}
+
 	if len(correctFields) > 0 {
 		return false, fmt.Errorf("missing columns in table expressions: %v", correctFields)
 	}
