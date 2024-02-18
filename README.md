@@ -89,8 +89,8 @@ go build -o ../out .
 cd ..
 ```
 
-[Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 ### React
+[Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 ```shell
 cd ui-storage
 npm install
@@ -109,7 +109,7 @@ cd out
 .\calculationServer.exe
 ```
 
-API is available at `http://localhost:8080/api/v1` and UI at `http://localhost:3000`.\
+API is available at http://localhost:8080/api/v1 and UI at http://localhost:3000.\
 You can start new calculation server by running `.\calculationServer.exe` in another terminal, if you want to configure it edit `.env`
 
 # API Documentation for Storage
