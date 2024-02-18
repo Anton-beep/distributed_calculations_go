@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
+	"storage/internal/frontend"
+
 	// postgresql driver.
 	_ "storage/docs"
 	"storage/internal/api"
@@ -45,6 +47,9 @@ func main() {
 	if err != nil {
 		zap.S().Fatal(err.Error())
 	}
+
+	// frontend build
+	go frontend.ServeFrontend()
 
 	// api
 	err = api.New(d).Start().Run(":8080")

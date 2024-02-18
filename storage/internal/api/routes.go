@@ -353,8 +353,6 @@ func (a *API) PostResult(c *gin.Context) {
 		return
 	}
 
-	// change to ready
-	in.Expression.Status = db.ExpressionReady
 	in.Expression.EndCalculationTime = time.Now().Format("2006-01-02 15:04:05")
 	if err = a.expressions.UpdateExpression(in.Expression); err != nil {
 		out.Message = err.Error()

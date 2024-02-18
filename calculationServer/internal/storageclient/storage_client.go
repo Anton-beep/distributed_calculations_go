@@ -163,10 +163,13 @@ func (c *Client) Run() {
 		done <- true
 		if err != nil {
 			zap.S().Error(err)
+			exp.Status = ExpressionError
+			exp.Logs = err.Error()
+		} else {
+			exp.Status = ExpressionReady
+			exp.Logs = logs
 		}
 		exp.Answer = res
-		exp.Logs = logs
-		exp.Status = ExpressionError
 		zap.S().Infof("result: %v", exp)
 
 		// send result

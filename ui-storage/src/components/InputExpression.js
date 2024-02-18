@@ -7,14 +7,14 @@ export const InputExpression = () => {
     const [error, setError] = useState(false)
 
     const handleChange = (event) => {
-        const regex = /^[0-9+\-*/() ]*$/;
+        const regex = /^[0-9+\-*/(). ]*$/;
         if (regex.test(event.target.value)) {
             setExpression(event.target.value);
             setMessage('');
             setError(false);
         } else {
             setError(true);
-            setMessage("Invalid input. Only numbers and +, /, -, *, ), ( are allowed.");
+            setMessage("Invalid input. Only numbers and +, /, -, *, ), (, . are allowed.");
         }
     }
 
