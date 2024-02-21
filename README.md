@@ -48,6 +48,8 @@ See release section on github if your os is windows, if linux see build section 
 cd calculationServer
 docker build -t calculation-server .
 docker run -d --name calculation-server -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName calculation-server
+docker run -d --name calculation-server2 -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName2 calculation-server
+docker run -d --name calculation-server3 -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName3 calculation-server
 cd ..
 cd storage
 docker build -t storage .
@@ -73,6 +75,8 @@ cd ui-storage
 docker build -t ui-storage .
 docker run --env-file .env -p 3000:3000 -d --name ui-storage ui-storage
 ```
+
+To run more calculation servers edit `.env` and run it again with a different container name.
 
 ## Not Docker
 If you have error in powershell `cannot be loaded because running scripts is disabled on this
@@ -109,8 +113,9 @@ cd out
 .\calculationServer.exe
 ```
 
-API is available at http://localhost:8080/api/v1 and UI at http://localhost:3000.\
-You can start new calculation server by running `.\calculationServer.exe` in another terminal, if you want to configure it edit `.env`
+To start more calculation servers, edit `.env` (change name `CALCULATION_SERVER_NAME`) and run `.\calculationServer.exe` in another terminal.
+
+API is available at http://localhost:8080/api/v1 and UI at http://localhost:3000.
 
 # API Documentation for Storage
 Documentation is always available (without rebuild of the documentation) available at http://localhost:8080/swagger/index.html
