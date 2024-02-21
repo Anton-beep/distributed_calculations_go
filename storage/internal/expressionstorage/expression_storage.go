@@ -10,12 +10,13 @@ import (
 )
 
 type ExpressionStorage struct {
-	expressions sync.Map
-	db          *db.APIDb
-	checkAlive  time.Duration
+	expressions  sync.Map
+	db           *db.APIDb
+	checkAlive   time.Duration
+	serverStatus *sync.Map
 }
 
-func New(indb *db.APIDb, checkAlive time.Duration) *ExpressionStorage {
+func New(indb *db.APIDb, checkAlive time.Duration, serverStatus *sync.Map) *ExpressionStorage {
 	e := &ExpressionStorage{
 		db: indb,
 	}
@@ -30,6 +31,7 @@ func New(indb *db.APIDb, checkAlive time.Duration) *ExpressionStorage {
 	}
 
 	e.checkAlive = checkAlive
+	e.serverStatus = serverStatus
 	go e.keepAliveExpressions()
 	return e
 }
@@ -128,7 +130,17 @@ func (e *ExpressionStorage) keepAliveExpressions() {
 
 			if expression.Status == db.ExpressionWorking && expression.AliveExpiresAt < int(time.Now().Unix()) {
 				// change to not ready, so it will be calculated again
-				zap.S().Info(fmt.Sprintf("expression ID %v is not alive, change to not ready", expression.ID))
+				zap.S().Info(fmt.Sprintf("expression ID %v is not alive, change to not ready."+
+					" Dead server: %v", expression.ID, expression.Servername))
+
+				e.serverStatus.Range(func(key, _ interface{}) bool {
+					zap.S().Info(fmt.Sprintf("%v", key))
+					if expression.Servername == key.(string) {
+						e.serverStatus.Store(key, fmt.Sprintf("%v -> server %v is not alive",
+							time.Now().Format("01-02-2006 15:04:05"), expression.Servername))
+					}
+					return true
+				})
 				expression.Status = db.ExpressionNotReady
 				e.expressions.Store(key, expression)
 				// sync with database

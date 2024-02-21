@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
@@ -136,7 +137,7 @@ func (a *API) GetExpressionByID(c *gin.Context) {
 		out.Expression = db.Expression{}
 		out.Message = err.Error()
 		zap.S().Error(out)
-		c.JSON(http.StatusInternalServerError, out)
+		c.JSON(http.StatusBadRequest, out)
 		return
 	}
 
@@ -363,13 +364,16 @@ func (a *API) PostResult(c *gin.Context) {
 
 	// add server
 	a.servers.Add(in.Expression.Servername)
+	a.statusWorkers.Store(in.Expression.Servername, fmt.Sprintf("%v -> server %v finished calculating %v",
+		time.Now().Format("01-02-2006 15:04:05"), in.Expression.Servername, in.Expression.Value))
 
 	out.Message = "ok"
 	c.JSON(http.StatusOK, out)
 }
 
 type InKeepAlive struct {
-	Expression db.Expression `json:"expression" binding:"required"`
+	Expression    db.Expression `json:"expression" binding:"required"`
+	StatusWorkers string        `json:"status_workers" binding:"required"`
 }
 
 type OutKeepAlive struct {
@@ -411,6 +415,8 @@ func (a *API) KeepAlive(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, out)
 		return
 	}
+
+	a.statusWorkers.Store(expression.Servername, in.StatusWorkers)
 
 	c.JSON(http.StatusOK, OutPing{Message: "ok"})
 }
@@ -456,6 +462,7 @@ type OutGetComputingPowers struct {
 	Servers []struct {
 		ServerName            string `json:"server_name"`
 		CalculatedExpressions []int  `json:"calculated_expressions"`
+		ServerStatus          string `json:"server_status"`
 	} `json:"servers"`
 	Message string `json:"message"`
 }
@@ -480,10 +487,16 @@ func (a *API) GetComputingPowers(c *gin.Context) {
 		for _, expression := range operations {
 			ids = append(ids, expression.ID)
 		}
+
+		val, ok := a.statusWorkers.Load(server)
+		if !ok {
+			val = "unknown"
+		}
 		out.Servers = append(out.Servers, struct {
 			ServerName            string `json:"server_name"`
 			CalculatedExpressions []int  `json:"calculated_expressions"`
-		}{ServerName: server, CalculatedExpressions: ids})
+			ServerStatus          string `json:"server_status"`
+		}{ServerName: server, CalculatedExpressions: ids, ServerStatus: val.(string)})
 	}
 
 	out.Message = "ok"

@@ -473,11 +473,15 @@ const docTemplate = `{
         "api.InKeepAlive": {
             "type": "object",
             "required": [
-                "expression"
+                "expression",
+                "status_workers"
             ],
             "properties": {
                 "expression": {
                     "$ref": "#/definitions/db.Expression"
+                },
+                "status_workers": {
+                    "type": "string"
                 }
             }
         },
@@ -546,6 +550,9 @@ const docTemplate = `{
                                 }
                             },
                             "server_name": {
+                                "type": "string"
+                            },
+                            "server_status": {
                                 "type": "string"
                             }
                         }

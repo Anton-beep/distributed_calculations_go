@@ -25,8 +25,11 @@ definitions:
     properties:
       expression:
         $ref: '#/definitions/db.Expression'
+      status_workers:
+        type: string
     required:
     - expression
+    - status_workers
     type: object
   api.InPostExpression:
     properties:
@@ -70,6 +73,8 @@ definitions:
                 type: integer
               type: array
             server_name:
+              type: string
+            server_status:
               type: string
           type: object
         type: array

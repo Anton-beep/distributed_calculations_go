@@ -253,9 +253,13 @@ func TestAlive(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
+	var out3 api.OutPostExpression
+	err = json.Unmarshal(w.Body.Bytes(), &out3)
+	require.NoError(t, err)
+
 	w = httptest.NewRecorder()
 	var in2 api.InConfirmStartOfCalculating
-	in2.Expression.ID = 1
+	in2.Expression.ID = out3.ID
 	body, _ = json.Marshal(in2)
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
@@ -264,7 +268,8 @@ func TestAlive(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	var in3 api.InKeepAlive
-	in3.Expression.ID = 1
+	in3.Expression.ID = out3.ID
+	in3.StatusWorkers = "ok"
 	body, _ = json.Marshal(in3)
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/keepAlive", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
@@ -273,7 +278,7 @@ func TestAlive(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	var in4 api.InGetExpressionByID
-	in4.ID = 1
+	in4.ID = out3.ID
 	body, _ = json.Marshal(in4)
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/expressionById", strings.NewReader(string(body)))
 	router.ServeHTTP(w, req)
@@ -285,7 +290,7 @@ func TestAlive(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "ok", out.Message)
-	assert.Equal(t, 1, out.Expression.ID)
+	assert.Equal(t, out3.ID, out.Expression.ID)
 	assert.Greater(t, out.Expression.AliveExpiresAt, 0)
 }
 
@@ -305,9 +310,13 @@ func TestGetServers(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
+	var out3 api.OutPostExpression
+	err = json.Unmarshal(w.Body.Bytes(), &out3)
+	require.NoError(t, err)
+
 	w = httptest.NewRecorder()
 	var in2 api.InConfirmStartOfCalculating
-	in2.Expression.ID = 1
+	in2.Expression.ID = out3.ID
 	in2.Expression.Servername = "server1"
 	body, _ = json.Marshal(in2)
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/confirmStartCalculating", strings.NewReader(string(body)))

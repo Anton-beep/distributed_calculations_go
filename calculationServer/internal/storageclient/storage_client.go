@@ -316,12 +316,16 @@ func (c *Client) GetOperationsAndTimes() (expressionparser.ExecTimeConfig, error
 }
 
 type sendAlive struct {
+	Status     string     `json:"status_workers"`
 	Expression Expression `json:"expression"`
 }
 
 func (c *Client) SendAlive(expression Expression) error {
 	var send sendAlive
 	send.Expression = expression
+	send.Status = fmt.Sprintf("%v -> %v from %v workers are runninng to calcualte %v",
+		time.Now().Format("01-02-2006 15:04:05"), c.expressionParser.GetWorkingWorkers(),
+		c.expressionParser.GetTotalNumberOfWorkers(), expression.Value)
 	body, err := json.Marshal(send)
 	if err != nil {
 		return err

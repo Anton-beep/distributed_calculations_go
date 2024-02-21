@@ -26,6 +26,7 @@ export const ComputingPowers = () => {
                 return (
                     <ul className="list-group list-group-horizontal" key={index}>
                         <li className="list-group-item list-group-item-primary">{server.server_name}</li>
+                        <li className="list-group-item list-group-item-primary">{server.server_status}</li>
                         <li className="list-group-item list-group-item-primary">{server.calculated_expressions.join("; ")}</li>
                     </ul>
                 )
@@ -41,6 +42,7 @@ export const ComputingPowers = () => {
             <div className="scrollable-div">
                 <ul className="list-group list-group-horizontal">
                     <li className="list-group-item">Server Name</li>
+                    <li className="list-group-item">Status</li>
                     <li className="list-group-item">Calculated Expressions IDs</li>
                 </ul>
                 {showServers()}

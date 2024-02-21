@@ -11,6 +11,7 @@ import (
 	"storage/internal/db"
 	"storage/internal/expressionstorage"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type API struct {
 	db             *db.APIDb
 	expressions    *expressionstorage.ExpressionStorage
 	servers        *availableservers.AvailableServers
+	statusWorkers  sync.Map
 	execTimeConfig ExecTimeConfig
 	checkAlive     int
 }
@@ -28,10 +30,11 @@ func New(_db *db.APIDb) *API {
 		zap.S().Fatal(err)
 	}
 	newAPI := &API{
-		db:          _db,
-		expressions: expressionstorage.New(_db, time.Duration(num)*time.Second),
-		checkAlive:  num,
+		db:            _db,
+		statusWorkers: sync.Map{},
+		checkAlive:    num,
 	}
+	newAPI.expressions = expressionstorage.New(_db, time.Duration(num)*time.Second, &newAPI.statusWorkers)
 	newAPI.servers = availableservers.New(newAPI.expressions)
 	return newAPI
 }

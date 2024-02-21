@@ -37,6 +37,7 @@ type ExpressionParser struct {
 	execTimeConfig  ExecTimeConfig
 	mu              sync.Mutex
 	logs            *expressionlogger.ExpLogger
+	running         int
 }
 
 func isByteNumberOrPoint(b byte) bool {
@@ -334,7 +335,7 @@ func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, err
 	}
 
 	errChan := make(chan error)
-	running := 0
+	e.running = 0
 	readyChan := make(chan bool, e.numberOfWorkers+1)
 	// to understand, when this goroutine will go through all data elements
 
@@ -346,7 +347,7 @@ func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, err
 		}
 		for {
 			e.mu.Lock()
-			if !data[el.OperationID1].IsOperation && !data[el.OperationID2].IsOperation && running < e.numberOfWorkers {
+			if !data[el.OperationID1].IsOperation && !data[el.OperationID2].IsOperation && e.running < e.numberOfWorkers {
 				// we can start new worker
 				e.mu.Unlock()
 				break
@@ -361,7 +362,7 @@ func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, err
 			}
 		}
 
-		running++
+		e.running++
 		go func() {
 			e.mu.Lock()
 			// take numbers from data
@@ -392,14 +393,14 @@ func (e *ExpressionParser) CalculateRPNData(data []OperationOrNum) (float64, err
 			e.mu.Unlock()
 
 			e.mu.Lock()
-			running--
+			e.running--
 			e.mu.Unlock()
 			// read one element from pool, so new goroutine can turn on
 			readyChan <- true
 		}()
 	}
 
-	for running > 0 {
+	for e.running > 0 {
 		select {
 		case <-readyChan:
 			continue
@@ -431,4 +432,12 @@ func (e *ExpressionParser) CalculateExpression(in string) (float64, string, erro
 		return 0, "", err
 	}
 	return res, e.logs.Get(), nil
+}
+
+func (e *ExpressionParser) GetWorkingWorkers() int {
+	return e.running
+}
+
+func (e *ExpressionParser) GetTotalNumberOfWorkers() int {
+	return e.numberOfWorkers
 }
