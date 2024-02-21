@@ -1,3 +1,5 @@
+# Contact
+https://t.me/VUVAVIVU
 # Distributed Calculations
 Distributed calculations written in Go language. This project assumes all standard mathematical operations (+, /, *, -) need a lot of time to be calculated. Therefore, it would be logical to create a system that will organize the work of several machines to calculated given expressions as fast as possible.
 
