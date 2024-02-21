@@ -51,7 +51,7 @@ docker run -d --name calculation-server -e STORAGE_URL=http://host.docker.intern
 cd ..
 cd storage
 docker build -t storage .
-docker run -p 8080:8080 -d --name storage -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=password -e POSTGRESQL_DB=postgres -e POSTGRESQL_HOST=host.docker.internal -e POSTGRESQL_PORT=5432 -e RESET_POSTGRESQL=TRUE -e CHECK_SERVER_DURATION=5 storage
+docker run -p 8080:8080 -d --name storage -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=password -e POSTGRESQL_DB=postgres -e POSTGRESQL_HOST=host.docker.internal -e POSTGRESQL_PORT=5432 -e RESET_POSTGRESQL=FALSE -e CHECK_SERVER_DURATION=5 storage
 cd ..
 cd ui-storage
 docker build -t ui-storage .
