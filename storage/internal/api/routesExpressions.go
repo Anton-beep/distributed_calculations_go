@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"go.uber.org/zap"
 	"net/http"
 	"storage/internal/db"
@@ -51,7 +52,7 @@ type OutPostExpression struct {
 func (a *API) PostExpression(c *gin.Context) {
 	var in InPostExpression
 	var out OutPostExpression
-	if err := c.ShouldBindJSON(&in); err != nil {
+	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusBadRequest, out)
@@ -66,6 +67,7 @@ func (a *API) PostExpression(c *gin.Context) {
 		Logs:         "",
 		Status:       db.ExpressionNotReady,
 		CreationTime: time.Now().Format("2006-01-02 15:04:05"),
+		User:         c.MustGet("user").(db.User).ID,
 	}
 	newID, err := a.expressions.Add(newExpression)
 	if err != nil {
@@ -123,7 +125,7 @@ type OutGetExpressionByID struct {
 func (a *API) GetExpressionByID(c *gin.Context) {
 	var in InGetExpressionByID
 	var out OutGetExpressionByID
-	if err := c.ShouldBindJSON(&in); err != nil {
+	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
 		out.Expression = db.Expression{}
 		out.Message = err.Error()
 		zap.S().Error(out)
@@ -194,7 +196,7 @@ type OutSetOperationsAndTimes struct {
 func (a *API) PostOperationsAndTimes(c *gin.Context) {
 	var in map[string]int
 
-	if err := c.ShouldBindJSON(&in); err != nil {
+	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
 		out := OutSetOperationsAndTimes{Message: err.Error()}
 		zap.S().Error(out)
 		c.JSON(http.StatusBadRequest, out)
@@ -269,7 +271,7 @@ type OutConfirmStartOfCalculating struct {
 func (a *API) ConfirmStartCalculating(c *gin.Context) {
 	var in InConfirmStartOfCalculating
 	var out OutConfirmStartOfCalculating
-	if err := c.ShouldBindJSON(&in); err != nil {
+	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
 		out.Confirm = false
 		out.Message = err.Error()
 		zap.S().Error(out)
@@ -333,7 +335,7 @@ type OutPostResult struct {
 func (a *API) PostResult(c *gin.Context) {
 	var in InPostResult
 	var out OutPostResult
-	if err := c.ShouldBindJSON(&in); err != nil {
+	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusBadRequest, out)
@@ -395,7 +397,7 @@ type OutKeepAlive struct {
 func (a *API) KeepAlive(c *gin.Context) {
 	var in InKeepAlive
 	var out = OutKeepAlive{}
-	if err := c.ShouldBindJSON(&in); err != nil {
+	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
 		out.Message = err.Error()
 		c.JSON(http.StatusBadRequest, out)
 		return
@@ -444,7 +446,7 @@ type OutGetExpressionByServer struct {
 func (a *API) GetExpressionsByServer(c *gin.Context) {
 	var in InGetExpressionByServer
 	var out OutGetExpressionByServer
-	if err := c.ShouldBindJSON(&in); err != nil {
+	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusBadRequest, out)

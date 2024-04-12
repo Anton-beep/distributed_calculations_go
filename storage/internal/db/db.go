@@ -43,10 +43,10 @@ func New() (*APIDb, error) {
 	a := &APIDb{db}
 	// database will be wiped if in .env variable RESET_POSTGRESQL = TRUE
 	if os.Getenv("RESET_POSTGRESQL") != "TRUE" {
-		if res, _ := a.IsDBCorrect(); res {
+		if res, err := a.IsDBCorrect(); res {
 			zap.S().Info("database is correct")
 		} else {
-			zap.S().Warn("database is not correct, resetting")
+			zap.S().Warn(fmt.Sprintf("database is not correct: %v, resetting", err))
 			a.ResetDatabase()
 		}
 	} else {
@@ -56,16 +56,57 @@ func New() (*APIDb, error) {
 	return a, nil
 }
 
+func GetSQLFromFile(name string) (string, error) {
+	data, err := os.ReadFile(name)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 func (a *APIDb) ResetDatabase() {
-	_, err := a.db.Exec("DROP TABLE IF EXISTS expressions")
+	command, err := GetSQLFromFile("sqlScripts/resetDB.sql")
 	if err != nil {
 		zap.S().Fatal(err)
 	}
-	_, err = a.db.Exec("CREATE TABLE expressions (id SERIAL PRIMARY KEY, value TEXT, answer FLOAT, logs TEXT," +
-		" ready INT, alive_expires_at BIGINT, creation_time TEXT, end_calculation_time TEXT, server_name TEXT)")
+	_, err = a.db.Exec(command)
 	if err != nil {
 		zap.S().Fatal(err)
 	}
+}
+
+func (a *APIDb) CheckFields(tableName string, correctFields []string) error {
+	rows, err := a.db.Query("SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1", tableName)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	fieldsMap := make(map[string]bool)
+	for _, el := range correctFields {
+		fieldsMap[el] = true
+	}
+
+	for rows.Next() {
+		var columnName string
+		if err = rows.Scan(&columnName); err != nil {
+			return err
+		}
+		if _, ok := fieldsMap[columnName]; !ok {
+			return fmt.Errorf("unexpected column %s in table expressions", columnName)
+		}
+		delete(fieldsMap, columnName)
+	}
+
+	if err = rows.Err(); err != nil {
+		return err
+	}
+
+	if len(fieldsMap) > 0 {
+		return fmt.Errorf("missing columns in table expressions: %v", correctFields)
+	}
+
+	return nil
 }
 
 func (a *APIDb) IsDBCorrect() (bool, error) {
@@ -79,37 +120,21 @@ func (a *APIDb) IsDBCorrect() (bool, error) {
 	}
 
 	// Check if table has correct fields
-	rows, err := a.db.Query("SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = 'expressions'")
+
+	correctFieldsExpressions := []string{
+		"id", "value", "answer", "logs", "ready", "alive_expires_at", "creation_time", "end_calculation_time", "server_name", "user_id",
+	}
+	correctFieldsExpressionsUsers := []string{
+		"id", "login", "password",
+	}
+
+	err = a.CheckFields("expressions", correctFieldsExpressions)
 	if err != nil {
 		return false, err
 	}
-	defer rows.Close()
-
-	// Define the correct fields
-	correctFields := map[string]bool{
-		"id": true, "value": true, "answer": true, "logs": true,
-		"ready": true, "alive_expires_at": true, "creation_time": true,
-		"end_calculation_time": true, "server_name": true,
-	}
-
-	for rows.Next() {
-		var columnName string
-		if err = rows.Scan(&columnName); err != nil {
-			return false, err
-		}
-		if _, ok := correctFields[columnName]; !ok {
-			return false, fmt.Errorf("unexpected column %s in table expressions", columnName)
-		}
-		delete(correctFields, columnName)
-	}
-
-	if err = rows.Err(); err != nil {
+	err = a.CheckFields("users", correctFieldsExpressionsUsers)
+	if err != nil {
 		return false, err
 	}
-
-	if len(correctFields) > 0 {
-		return false, fmt.Errorf("missing columns in table expressions: %v", correctFields)
-	}
-
 	return true, nil
 }

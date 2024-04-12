@@ -64,6 +64,17 @@ func (e *ExpressionStorage) GetByID(id int) (db.Expression, error) {
 	return db.Expression{}, errors.New("expression is not found")
 }
 
+func (e *ExpressionStorage) GetByUserAndID(userID, id int) (db.Expression, error) {
+	expression, err := e.GetByID(id)
+	if err != nil {
+		return db.Expression{}, err
+	}
+	if expression.User != userID {
+		return db.Expression{}, errors.New("expression is not found")
+	}
+	return expression, nil
+}
+
 // GetNotWorkingExpressions returns all expressions that have Status == ExpressionNotReady.
 func (e *ExpressionStorage) GetNotWorkingExpressions() []db.Expression {
 	expressions := make([]db.Expression, 0)

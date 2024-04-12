@@ -33,10 +33,11 @@ type Expression struct {
 	Answer             float64 `json:"answer"`
 	Logs               string  `json:"logs"`
 	Status             int     `json:"ready"` // 0 - not ready, 1 - working, 2 - ready, 3 - error
-	AliveExpiresAt     int     `json:"alive_experise_at"`
+	AliveExpiresAt     int     `json:"alive_expires_at"`
 	CreationTime       string  `json:"creation_time"`
 	EndCalculationTime string  `json:"end_calculation_time"`
 	Servername         string  `json:"server_name"`
+	User               int     `db:"user_id" json:"user_id"`
 }
 
 func New() (*Client, error) {

@@ -16,12 +16,13 @@ import (
 )
 
 type API struct {
-	db             *db.APIDb
-	expressions    *expressionstorage.ExpressionStorage
-	servers        *availableservers.AvailableServers
-	statusWorkers  sync.Map
-	execTimeConfig ExecTimeConfig
-	checkAlive     int
+	db              *db.APIDb
+	expressions     *expressionstorage.ExpressionStorage
+	servers         *availableservers.AvailableServers
+	statusWorkers   sync.Map
+	execTimeConfig  ExecTimeConfig
+	checkAlive      int
+	secretSignature []byte
 }
 
 func New(_db *db.APIDb) *API {
@@ -30,9 +31,10 @@ func New(_db *db.APIDb) *API {
 		zap.S().Fatal(err)
 	}
 	newAPI := &API{
-		db:            _db,
-		statusWorkers: sync.Map{},
-		checkAlive:    num,
+		db:              _db,
+		statusWorkers:   sync.Map{},
+		checkAlive:      num,
+		secretSignature: []byte(os.Getenv("SECRET_SIGNATURE")),
 	}
 	newAPI.expressions = expressionstorage.New(_db, time.Duration(num)*time.Second, &newAPI.statusWorkers)
 	newAPI.servers = availableservers.New(newAPI.expressions)
@@ -48,14 +50,20 @@ func (a *API) Start() *gin.Engine {
 
 	router.GET("/api/v1/ping", a.Ping)
 
-	// for user
-	router.POST("/api/v1/expression", a.PostExpression)
-	router.GET("/api/v1/expression", a.GetAllExpressions)
-	router.GET("/api/v1/expressionById", a.GetExpressionByID)
-	router.POST("/api/v1/postOperationsAndTimes", a.PostOperationsAndTimes)
-	router.GET("/api/v1/getOperationsAndTimes", a.GetOperationsAndTimes)
-	router.GET("/api/v1/getExpressionsByServer", a.GetExpressionsByServer)
-	router.GET("/api/v1/getComputingPowers", a.GetComputingPowers)
+	authorized := router.Group("/api/v1")
+	authorized.Use(a.Auth)
+
+	// for users
+	router.POST("/api/v1/register", a.Register)
+	router.POST("/api/v1/login", a.Login)
+
+	authorized.POST("/expression", a.PostExpression)
+	authorized.GET("/expression", a.GetAllExpressions)
+	authorized.GET("/expressionById", a.GetExpressionByID)
+	authorized.POST("/postOperationsAndTimes", a.PostOperationsAndTimes)
+	authorized.GET("/getOperationsAndTimes", a.GetOperationsAndTimes)
+	authorized.GET("/getExpressionsByServer", a.GetExpressionsByServer)
+	authorized.GET("/getComputingPowers", a.GetComputingPowers)
 
 	// for calculation server
 	router.GET("/api/v1/getUpdates", a.GetUpdates)
