@@ -73,7 +73,7 @@ func main() {
 	// frontend build
 	go frontend.ServeFrontend()
 
-	server := gRPCServer.New(expStorage, servers, execTimeConfig, &workerStorage) // create a new gRPC server
+	server := gRPCServer.New(expStorage, servers, execTimeConfig, &workerStorage, d) // create a new gRPC server
 	go func() {
 		lis, err := net.Listen("tcp", ":50051") // specify the port you want your gRPC server to run on
 		if err != nil {

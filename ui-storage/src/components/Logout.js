@@ -2,7 +2,7 @@ import Cookies from "js-cookie";
 
 export const Logout = () => {
     Cookies.remove('token');
-    window.location.reload()
+    window.location = '/login'
 
     return (
         <div className="container">

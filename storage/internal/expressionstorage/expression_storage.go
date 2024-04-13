@@ -48,10 +48,12 @@ func (e *ExpressionStorage) Add(expression db.Expression) (int, error) {
 	return newID, nil
 }
 
-func (e *ExpressionStorage) GetAll() []db.Expression {
+func (e *ExpressionStorage) GetAll(userID int) []db.Expression {
 	expressions := make([]db.Expression, 0)
 	e.expressions.Range(func(_, value interface{}) bool {
-		expressions = append(expressions, value.(db.Expression))
+		if value.(db.Expression).User == userID {
+			expressions = append(expressions, value.(db.Expression))
+		}
 		return true
 	})
 	return expressions
@@ -64,7 +66,7 @@ func (e *ExpressionStorage) GetByID(id int) (db.Expression, error) {
 	return db.Expression{}, errors.New("expression is not found")
 }
 
-func (e *ExpressionStorage) GetByUserAndID(userID, id int) (db.Expression, error) {
+func (e *ExpressionStorage) GetByUserAndID(userID int, id int) (db.Expression, error) {
 	expression, err := e.GetByID(id)
 	if err != nil {
 		return db.Expression{}, err
@@ -165,10 +167,10 @@ func (e *ExpressionStorage) keepAliveExpressions() {
 }
 
 // GetByServer returns all expressions that have ServerName == server.
-func (e *ExpressionStorage) GetByServer(server string) []db.Expression {
+func (e *ExpressionStorage) GetByServer(userID int, server string) []db.Expression {
 	expressions := make([]db.Expression, 0)
 	e.expressions.Range(func(_, value interface{}) bool {
-		if value.(db.Expression).Servername == server {
+		if value.(db.Expression).Servername == server && value.(db.Expression).User == userID {
 			expressions = append(expressions, value.(db.Expression))
 		}
 		return true

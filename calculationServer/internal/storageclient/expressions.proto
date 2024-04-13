@@ -1,6 +1,6 @@
 syntax = "proto3";
 package storage;
-option go_package = "storage/gRPCServer";
+option go_package = "storage/storageclient";
 
 message Empty {}
 
@@ -31,8 +31,11 @@ message KeepAliveMsg {
 }
 
 message OperationsAndTimes {
-  map<string, int64> operations = 1;
-  string message = 2;
+  int64 TimeAdd = 1;
+  int64 TimeSubtract = 2;
+  int64 TimeDivide = 3;
+  int64 TimeMultiply = 4;
+  string message = 5;
 }
 
 service ExpressionsService {
@@ -40,5 +43,5 @@ service ExpressionsService {
   rpc ConfirmStartCalculating (Expression) returns (Confirm) {}
   rpc PostResult (Expression) returns (Message) {}
   rpc KeepAlive (KeepAliveMsg) returns (Empty) {}
-  rpc GetOperationsAndTimes (Empty) returns (OperationsAndTimes) {}
+  rpc GetOperationsAndTimes (Expression) returns (OperationsAndTimes) {}
 }

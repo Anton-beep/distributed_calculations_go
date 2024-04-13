@@ -26,12 +26,13 @@ func (a *APIDb) GetUserByUsername(username string) (User, error) {
 	return user, nil
 }
 
-func (a *APIDb) AddUser(user User) error {
-	_, err := a.db.Exec("INSERT INTO users(login, password) VALUES ($1, $2)", user.Login, user.Password)
+func (a *APIDb) AddUser(user User) (int, error) {
+	var id int
+	err := a.db.QueryRow("INSERT INTO users(login, password) VALUES ($1, $2) RETURNING id", user.Login, user.Password).Scan(&id)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return id, nil
 }
 
 func (a *APIDb) DeleteUser(id int) error {

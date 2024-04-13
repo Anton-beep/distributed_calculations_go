@@ -22,9 +22,10 @@ type Server struct {
 	execTimeConfig *api.ExecTimeConfig
 	ExpressionsServiceServer
 	statusWorkers *sync.Map
+	db            *db.APIDb
 }
 
-func New(expressions *expressionstorage.ExpressionStorage, servers *availableservers.AvailableServers, execTimeConfig *api.ExecTimeConfig, statusWorkers *sync.Map) *Server {
+func New(expressions *expressionstorage.ExpressionStorage, servers *availableservers.AvailableServers, execTimeConfig *api.ExecTimeConfig, statusWorkers *sync.Map, db *db.APIDb) *Server {
 	num, err := strconv.Atoi(os.Getenv("CHECK_SERVER_DURATION"))
 	if err != nil {
 		zap.S().Fatal(err)
@@ -35,6 +36,7 @@ func New(expressions *expressionstorage.ExpressionStorage, servers *availableser
 		checkAlive:     num,
 		execTimeConfig: execTimeConfig,
 		statusWorkers:  statusWorkers,
+		db:             db,
 	}
 }
 
@@ -147,14 +149,16 @@ func (s *Server) KeepAlive(_ context.Context, msg *KeepAliveMsg) (*Empty, error)
 	return nil, nil
 }
 
-func (s *Server) GetOperationsAndTimes(_ context.Context, _ *Empty) (*OperationsAndTimes, error) {
-	outMap := make(map[string]int64)
-	outMap["+"] = s.execTimeConfig.TimeAdd.Milliseconds()
-	outMap["-"] = s.execTimeConfig.TimeSubtract.Milliseconds()
-	outMap["/"] = s.execTimeConfig.TimeDivide.Milliseconds()
-	outMap["*"] = s.execTimeConfig.TimeMultiply.Milliseconds()
+func (s *Server) GetOperationsAndTimes(_ context.Context, e *Expression) (*OperationsAndTimes, error) {
+	operations, err := s.db.GetUserOperations(int(e.UserId))
+	if err != nil {
+		return nil, err
+	}
 	return &OperationsAndTimes{
-		Operations: outMap,
-		Message:    "ok",
+		TimeAdd:      int64(operations.TimeAdd),
+		TimeSubtract: int64(operations.TimeSubtract),
+		TimeMultiply: int64(operations.TimeMultiply),
+		TimeDivide:   int64(operations.TimeDivide),
+		Message:      "ok",
 	}, nil
 }

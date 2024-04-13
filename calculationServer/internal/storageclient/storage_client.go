@@ -116,8 +116,8 @@ func (c *Client) tryGetUpdates() (*Expression, bool) {
 	return nil, false
 }
 
-func (c *Client) tryUpdateTimeConfig() {
-	config, err := c.GetOperationsAndTimes()
+func (c *Client) tryUpdateTimeConfig(exp *Expression) {
+	config, err := c.GetOperationsAndTimes(exp)
 	if err != nil {
 		zap.S().Error(err)
 	}
@@ -173,7 +173,7 @@ func (c *Client) Run() {
 		}
 
 		// update exec time config
-		c.tryUpdateTimeConfig()
+		c.tryUpdateTimeConfig(exp)
 
 		ticker := time.NewTicker(c.keepAlive)
 		done := make(chan bool)
@@ -278,33 +278,22 @@ type AnsGetOperationsAndTimes struct {
 }
 
 // GetOperationsAndTimes returns the time for each operation from the storage.
-func (c *Client) GetOperationsAndTimes() (expressionparser.ExecTimeConfig, error) {
+func (c *Client) GetOperationsAndTimes(e *Expression) (expressionparser.ExecTimeConfig, error) {
 	ans, err := c.gRPCClient.GetOperationsAndTimes(
 		context.Background(),
-		&Empty{},
+		e,
 	)
 
 	if err != nil {
 		return expressionparser.ExecTimeConfig{}, err
 	}
 
-	var config expressionparser.ExecTimeConfig
-	for key, val := range ans.Operations {
-		switch key {
-		case "+":
-			config.TimeAdd = time.Duration(val) * time.Millisecond
-		case "-":
-			config.TimeSubtract = time.Duration(val) * time.Millisecond
-		case "/":
-			config.TimeDivide = time.Duration(val) * time.Millisecond
-		case "*":
-			config.TimeMultiply = time.Duration(val) * time.Millisecond
-		default:
-			return expressionparser.ExecTimeConfig{}, fmt.Errorf("unknown operator: %s", key)
-		}
-	}
-
-	return config, nil
+	return expressionparser.ExecTimeConfig{
+		TimeAdd:      time.Duration(ans.TimeAdd) * time.Millisecond,
+		TimeSubtract: time.Duration(ans.TimeSubtract) * time.Millisecond,
+		TimeDivide:   time.Duration(ans.TimeDivide) * time.Millisecond,
+		TimeMultiply: time.Duration(ans.TimeMultiply) * time.Millisecond,
+	}, nil
 }
 
 func (c *Client) KeepAlive(expression *Expression) error {

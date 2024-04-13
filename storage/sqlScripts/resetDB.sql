@@ -19,8 +19,21 @@ CREATE TABLE expressions
     creation_time        TEXT,
     end_calculation_time TEXT,
     server_name          TEXT,
-    user_id INT,
+    user_id              INT,
     CONSTRAINT fk_user
-        FOREIGN KEY(user_id)
-            REFERENCES users(id)
+        FOREIGN KEY (user_id)
+            REFERENCES users (id)
+);
+
+CREATE TABLE operations
+(
+    id            SERIAL PRIMARY KEY,
+    time_add      INT,
+    time_subtract INT,
+    time_divide   INT,
+    time_multiply INT,
+    user_id       INT,
+    CONSTRAINT fk_user
+        FOREIGN KEY (user_id)
+            REFERENCES users (id)
 );

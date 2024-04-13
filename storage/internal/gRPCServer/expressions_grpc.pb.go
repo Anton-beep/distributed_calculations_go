@@ -26,7 +26,7 @@ type ExpressionsServiceClient interface {
 	ConfirmStartCalculating(ctx context.Context, in *Expression, opts ...grpc.CallOption) (*Confirm, error)
 	PostResult(ctx context.Context, in *Expression, opts ...grpc.CallOption) (*Message, error)
 	KeepAlive(ctx context.Context, in *KeepAliveMsg, opts ...grpc.CallOption) (*Empty, error)
-	GetOperationsAndTimes(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*OperationsAndTimes, error)
+	GetOperationsAndTimes(ctx context.Context, in *Expression, opts ...grpc.CallOption) (*OperationsAndTimes, error)
 }
 
 type expressionsServiceClient struct {
@@ -96,7 +96,7 @@ func (c *expressionsServiceClient) KeepAlive(ctx context.Context, in *KeepAliveM
 	return out, nil
 }
 
-func (c *expressionsServiceClient) GetOperationsAndTimes(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*OperationsAndTimes, error) {
+func (c *expressionsServiceClient) GetOperationsAndTimes(ctx context.Context, in *Expression, opts ...grpc.CallOption) (*OperationsAndTimes, error) {
 	out := new(OperationsAndTimes)
 	err := c.cc.Invoke(ctx, "/storage.ExpressionsService/GetOperationsAndTimes", in, out, opts...)
 	if err != nil {
@@ -113,7 +113,7 @@ type ExpressionsServiceServer interface {
 	ConfirmStartCalculating(context.Context, *Expression) (*Confirm, error)
 	PostResult(context.Context, *Expression) (*Message, error)
 	KeepAlive(context.Context, *KeepAliveMsg) (*Empty, error)
-	GetOperationsAndTimes(context.Context, *Empty) (*OperationsAndTimes, error)
+	GetOperationsAndTimes(context.Context, *Expression) (*OperationsAndTimes, error)
 	mustEmbedUnimplementedExpressionsServiceServer()
 }
 
@@ -133,7 +133,7 @@ func (UnimplementedExpressionsServiceServer) PostResult(context.Context, *Expres
 func (UnimplementedExpressionsServiceServer) KeepAlive(context.Context, *KeepAliveMsg) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method KeepAlive not implemented")
 }
-func (UnimplementedExpressionsServiceServer) GetOperationsAndTimes(context.Context, *Empty) (*OperationsAndTimes, error) {
+func (UnimplementedExpressionsServiceServer) GetOperationsAndTimes(context.Context, *Expression) (*OperationsAndTimes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOperationsAndTimes not implemented")
 }
 func (UnimplementedExpressionsServiceServer) mustEmbedUnimplementedExpressionsServiceServer() {}
@@ -225,7 +225,7 @@ func _ExpressionsService_KeepAlive_Handler(srv interface{}, ctx context.Context,
 }
 
 func _ExpressionsService_GetOperationsAndTimes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(Expression)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func _ExpressionsService_GetOperationsAndTimes_Handler(srv interface{}, ctx cont
 		FullMethod: "/storage.ExpressionsService/GetOperationsAndTimes",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ExpressionsServiceServer).GetOperationsAndTimes(ctx, req.(*Empty))
+		return srv.(ExpressionsServiceServer).GetOperationsAndTimes(ctx, req.(*Expression))
 	}
 	return interceptor(ctx, in, info, handler)
 }

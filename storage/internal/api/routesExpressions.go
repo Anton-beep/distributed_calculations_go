@@ -96,7 +96,8 @@ type OutGetAllExpressions struct {
 //	@Success		200	{object}	OutGetAllExpressions
 //	@Router			/expression [get]
 func (a *API) GetAllExpressions(c *gin.Context) {
-	expressions := a.expressions.GetAll()
+	user := c.MustGet("user").(db.User)
+	expressions := a.expressions.GetAll(user.ID)
 	c.JSON(http.StatusOK, OutGetAllExpressions{Expressions: expressions, Message: "ok"})
 }
 
@@ -133,7 +134,9 @@ func (a *API) GetExpressionByID(c *gin.Context) {
 	}
 
 	// get expression from storage
-	expression, err := a.expressions.GetByID(in.ID)
+	user := c.MustGet("user").(db.User)
+
+	expression, err := a.expressions.GetByUserAndID(user.ID, in.ID)
 	if err != nil {
 		out.Expression = db.Expression{}
 		out.Message = err.Error()
@@ -169,11 +172,17 @@ type OutGetOperationsAndTimes struct {
 //	@Success		200	{object}	OutGetOperationsAndTimes
 //	@Router			/getOperationsAndTimes [get]
 func (a *API) GetOperationsAndTimes(c *gin.Context) {
+	operations, err := a.db.GetUserOperations(c.MustGet("user").(db.User).ID)
+	if err != nil {
+		zap.S().Error(err)
+		c.JSON(http.StatusInternalServerError, OutGetOperationsAndTimes{Message: err.Error()})
+		return
+	}
 	outMap := make(map[string]int)
-	outMap["+"] = int(a.execTimeConfig.TimeAdd.Milliseconds())
-	outMap["-"] = int(a.execTimeConfig.TimeSubtract.Milliseconds())
-	outMap["/"] = int(a.execTimeConfig.TimeDivide.Milliseconds())
-	outMap["*"] = int(a.execTimeConfig.TimeMultiply.Milliseconds())
+	outMap["+"] = operations.TimeAdd
+	outMap["-"] = operations.TimeSubtract
+	outMap["/"] = operations.TimeDivide
+	outMap["*"] = operations.TimeMultiply
 	c.JSON(http.StatusOK, OutGetOperationsAndTimes{Data: outMap, Message: "ok"})
 }
 
@@ -202,23 +211,31 @@ func (a *API) PostOperationsAndTimes(c *gin.Context) {
 		return
 	}
 
+	operations, err := a.db.GetUserOperations(c.MustGet("user").(db.User).ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, OutSetOperationsAndTimes{Message: err.Error()})
+		return
+	}
+
 	msg := ""
 	for key, value := range in {
 		switch key {
 		case "+":
-			a.execTimeConfig.TimeAdd = time.Duration(value) * time.Millisecond
+			operations.TimeAdd = value
 			msg += "changed for +;"
 		case "-":
-			a.execTimeConfig.TimeSubtract = time.Duration(value) * time.Millisecond
+			operations.TimeSubtract = value
 			msg += "changed for -;"
 		case "/":
-			a.execTimeConfig.TimeDivide = time.Duration(value) * time.Millisecond
+			operations.TimeDivide = value
 			msg += "changed for /;"
 		case "*":
-			a.execTimeConfig.TimeMultiply = time.Duration(value) * time.Millisecond
+			operations.TimeMultiply = value
 			msg += "changed for *;"
 		}
 	}
+
+	err = a.db.UpdateOperation(operations)
 
 	out := OutSetOperationsAndTimes{Message: msg}
 	c.JSON(http.StatusOK, out)
@@ -255,7 +272,8 @@ func (a *API) GetExpressionsByServer(c *gin.Context) {
 	}
 
 	// get expressions from storage
-	expressions := a.expressions.GetByServer(in.ServerName)
+	user := c.MustGet("user").(db.User)
+	expressions := a.expressions.GetByServer(user.ID, in.ServerName)
 	out.Expressions = expressions
 	out.Message = "ok"
 	c.JSON(http.StatusOK, out)
@@ -283,9 +301,10 @@ func (a *API) GetComputingPowers(c *gin.Context) {
 	var out OutGetComputingPowers
 
 	// get computing powers
+	user := c.MustGet("user").(db.User)
 	servers := a.servers.GetAll()
 	for _, server := range servers {
-		operations := a.servers.GetExpressions(server)
+		operations := a.servers.GetExpressions(user.ID, server)
 		ids := make([]int, 0)
 		for _, expression := range operations {
 			ids = append(ids, expression.ID)

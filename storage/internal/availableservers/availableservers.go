@@ -46,13 +46,13 @@ func (a *AvailableServers) GetAll() []string {
 	return a.servers
 }
 
-func (a *AvailableServers) GetExpressions(server string) []db.Expression {
+func (a *AvailableServers) GetExpressions(userID int, server string) []db.Expression {
 	res := make([]db.Expression, 0)
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	for _, s := range a.servers {
 		if s == server {
-			res = append(res, a.expressions.GetByServer(s)...)
+			res = append(res, a.expressions.GetByServer(userID, s)...)
 		}
 	}
 	return res

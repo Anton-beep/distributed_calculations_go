@@ -65,7 +65,19 @@ func (a *API) Register(c *gin.Context) {
 		Login:    in.Login,
 		Password: hash,
 	}
-	if err := a.db.AddUser(user); err != nil {
+	id, err := a.db.AddUser(user)
+	if err != nil {
+		out.Message = err.Error()
+		zap.S().Error(out)
+		c.JSON(http.StatusInternalServerError, out)
+		return
+	}
+
+	// add operations
+	operation := db.Operation{
+		User: id,
+	}
+	if _, err = a.db.AddOperation(operation); err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
 		c.JSON(http.StatusInternalServerError, out)
@@ -136,7 +148,7 @@ type OutGetUser struct {
 }
 
 func (a *API) GetUser(c *gin.Context) {
-	user, _ := c.Get("user")
+	user := c.MustGet("user")
 	c.JSON(http.StatusOK, OutGetUser{
 		Login: user.(db.User).Login,
 	})
@@ -158,7 +170,7 @@ func (a *API) UpdateUser(c *gin.Context) {
 	}
 
 	// check if user exists
-	u, _ := c.Get("user")
+	u := c.MustGet("user")
 	user := u.(db.User)
 
 	if in.OldPassword != "" || in.NewPassword != "" {

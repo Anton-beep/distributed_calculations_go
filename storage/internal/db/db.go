@@ -127,12 +127,19 @@ func (a *APIDb) IsDBCorrect() (bool, error) {
 	correctFieldsExpressionsUsers := []string{
 		"id", "login", "password",
 	}
+	correctFieldsOperarions := []string{
+		"id", "time_add", "time_subtract", "time_divide", "time_multiply", "user_id",
+	}
 
 	err = a.CheckFields("expressions", correctFieldsExpressions)
 	if err != nil {
 		return false, err
 	}
 	err = a.CheckFields("users", correctFieldsExpressionsUsers)
+	if err != nil {
+		return false, err
+	}
+	err = a.CheckFields("operations", correctFieldsOperarions)
 	if err != nil {
 		return false, err
 	}
