@@ -12,32 +12,32 @@ import (
 	"storage/internal/expressionstorage"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type API struct {
 	db              *db.APIDb
 	expressions     *expressionstorage.ExpressionStorage
 	servers         *availableservers.AvailableServers
-	statusWorkers   sync.Map
-	execTimeConfig  ExecTimeConfig
+	statusWorkers   *sync.Map
+	execTimeConfig  *ExecTimeConfig
 	checkAlive      int
 	secretSignature []byte
 }
 
-func New(_db *db.APIDb) *API {
+func New(_db *db.APIDb, expressions *expressionstorage.ExpressionStorage, statusWorkers *sync.Map, servers *availableservers.AvailableServers, execTimeConfig *ExecTimeConfig) *API {
 	num, err := strconv.Atoi(os.Getenv("CHECK_SERVER_DURATION"))
 	if err != nil {
 		zap.S().Fatal(err)
 	}
 	newAPI := &API{
 		db:              _db,
-		statusWorkers:   sync.Map{},
+		statusWorkers:   statusWorkers,
 		checkAlive:      num,
 		secretSignature: []byte(os.Getenv("SECRET_SIGNATURE")),
+		execTimeConfig:  execTimeConfig,
 	}
-	newAPI.expressions = expressionstorage.New(_db, time.Duration(num)*time.Second, &newAPI.statusWorkers)
-	newAPI.servers = availableservers.New(newAPI.expressions)
+	newAPI.expressions = expressions
+	newAPI.servers = servers
 	return newAPI
 }
 
@@ -45,6 +45,7 @@ func (a *API) Start() *gin.Engine {
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
+	config.AllowHeaders = []string{"Authorization", "Content-Type"}
 	config.AllowAllOrigins = true
 	router.Use(cors.New(config))
 
@@ -56,7 +57,10 @@ func (a *API) Start() *gin.Engine {
 	// for users
 	router.POST("/api/v1/register", a.Register)
 	router.POST("/api/v1/login", a.Login)
+	router.GET("/api/v1/login", a.Login)
 
+	authorized.GET("/getUser", a.GetUser)
+	authorized.POST("/updateUser", a.UpdateUser)
 	authorized.POST("/expression", a.PostExpression)
 	authorized.GET("/expression", a.GetAllExpressions)
 	authorized.GET("/expressionById", a.GetExpressionByID)
@@ -64,12 +68,6 @@ func (a *API) Start() *gin.Engine {
 	authorized.GET("/getOperationsAndTimes", a.GetOperationsAndTimes)
 	authorized.GET("/getExpressionsByServer", a.GetExpressionsByServer)
 	authorized.GET("/getComputingPowers", a.GetComputingPowers)
-
-	// for calculation server
-	router.GET("/api/v1/getUpdates", a.GetUpdates)
-	router.POST("/api/v1/confirmStartCalculating", a.ConfirmStartCalculating)
-	router.POST("/api/v1/postResult", a.PostResult)
-	router.POST("/api/v1/keepAlive", a.KeepAlive)
 
 	// docs
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

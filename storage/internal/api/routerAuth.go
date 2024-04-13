@@ -130,3 +130,88 @@ func (a *API) Login(c *gin.Context) {
 	out.Message = "ok"
 	c.JSON(http.StatusOK, out)
 }
+
+type OutGetUser struct {
+	Login string `json:"login"`
+}
+
+func (a *API) GetUser(c *gin.Context) {
+	user, _ := c.Get("user")
+	c.JSON(http.StatusOK, OutGetUser{
+		Login: user.(db.User).Login,
+	})
+}
+
+type InUpdateUser struct {
+	NewPassword string `json:"password"`
+	OldPassword string `json:"old_password"`
+	Login       string `json:"login"`
+}
+
+func (a *API) UpdateUser(c *gin.Context) {
+	var in InUpdateUser
+	var out OutRegister
+	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
+		out.Message = err.Error()
+		c.JSON(http.StatusBadRequest, out)
+		return
+	}
+
+	// check if user exists
+	u, _ := c.Get("user")
+	user := u.(db.User)
+
+	if in.OldPassword != "" || in.NewPassword != "" {
+		if in.OldPassword == "" {
+			out.Message = "old password is empty"
+			c.JSON(http.StatusBadRequest, out)
+			return
+		}
+
+		if in.NewPassword == "" {
+			out.Message = "new password is empty"
+			c.JSON(http.StatusBadRequest, out)
+			return
+		}
+
+		err := cryptPasswords.ComparePasswordWithHash(user.Password, in.OldPassword)
+		if err != nil {
+			out.Message = "wrong password"
+			c.JSON(http.StatusUnauthorized, out)
+			return
+		}
+
+		hash, err := cryptPasswords.GeneratePasswordHash(in.NewPassword)
+		if err != nil {
+			out.Message = err.Error()
+			zap.S().Error(out)
+			c.JSON(http.StatusInternalServerError, out)
+			return
+		}
+
+		user.Password = hash
+		if err := a.db.UpdateUser(user); err != nil {
+			out.Message = err.Error()
+			zap.S().Error(out)
+			c.JSON(http.StatusInternalServerError, out)
+			return
+		}
+
+		out.Message = "ok"
+		c.JSON(http.StatusOK, out)
+	} else if in.Login != "" {
+		user.Login = in.Login
+		if err := a.db.UpdateUser(user); err != nil {
+			out.Message = err.Error()
+			zap.S().Error(out)
+			c.JSON(http.StatusInternalServerError, out)
+			return
+		}
+
+		out.Message = "ok"
+		c.JSON(http.StatusOK, out)
+	} else {
+		out.Message = "nothing to update"
+		c.JSON(http.StatusBadRequest, out)
+	}
+}

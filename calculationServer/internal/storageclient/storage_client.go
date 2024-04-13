@@ -2,14 +2,14 @@ package storageclient
 
 import (
 	"calculationServer/pkg/expressionparser"
-	"encoding/json"
+	"context"
 	"fmt"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"io"
-	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -25,24 +25,36 @@ type Client struct {
 	expressionParser *expressionparser.ExpressionParser
 	keepAlive        time.Duration
 	serverName       string
+	connection       *grpc.ClientConn
+	gRPCClient       ExpressionsServiceClient
 }
 
-type Expression struct {
-	ID                 int     `json:"id"`
-	Value              string  `json:"value"`
-	Answer             float64 `json:"answer"`
-	Logs               string  `json:"logs"`
-	Status             int     `json:"ready"` // 0 - not ready, 1 - working, 2 - ready, 3 - error
-	AliveExpiresAt     int     `json:"alive_expires_at"`
-	CreationTime       string  `json:"creation_time"`
-	EndCalculationTime string  `json:"end_calculation_time"`
-	Servername         string  `json:"server_name"`
-	User               int     `db:"user_id" json:"user_id"`
-}
-
+/*
+	type Expression struct {
+		ID                 int     `json:"id"`
+		Value              string  `json:"value"`
+		Answer             float64 `json:"answer"`
+		Logs               string  `json:"logs"`
+		Status             int     `json:"ready"` // 0 - not ready, 1 - working, 2 - ready, 3 - error
+		AliveExpiresAt     int     `json:"alive_expires_at"`
+		CreationTime       string  `json:"creation_time"`
+		EndCalculationTime string  `json:"end_calculation_time"`
+		Servername         string  `json:"server_name"`
+		User               int     `db:"user_id" json:"user_id"`
+	}
+*/
 func New() (*Client, error) {
 	c := &Client{}
 	c.storageServer = os.Getenv("STORAGE_URL")
+
+	conn, err := grpc.Dial(c.storageServer, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	c.connection = conn
+
+	c.gRPCClient = NewExpressionsServiceClient(conn)
+
 	c.expressionParser = expressionparser.New()
 
 	num, err := strconv.Atoi(os.Getenv("NUMBER_OF_CALCULATORS"))
@@ -67,7 +79,15 @@ func New() (*Client, error) {
 	return c, nil
 }
 
-func (c *Client) tryGetUpdates() (Expression, bool) {
+func (c *Client) CloseConn() error {
+	err := c.connection.Close()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) tryGetUpdates() (*Expression, bool) {
 	zap.S().Info("try to get updates")
 	expressions, err := c.GetUpdates()
 	if err != nil {
@@ -77,11 +97,11 @@ func (c *Client) tryGetUpdates() (Expression, bool) {
 	if len(expressions) == 0 {
 		zap.S().Info("no expressions")
 		time.Sleep(2000 * time.Millisecond)
-		return Expression{}, false
+		return nil, false
 	}
 	exp := expressions[0]
 	zap.S().Infof("got expression: %v", exp)
-	exp.Servername = c.serverName
+	exp.ServerName = c.serverName
 	ok, err := c.TryToConfirm(exp)
 	if err != nil {
 		zap.S().Error(err)
@@ -93,7 +113,7 @@ func (c *Client) tryGetUpdates() (Expression, bool) {
 	}
 	time.Sleep(2000 * time.Millisecond)
 	zap.S().Info("can't confirm, try to get updates again")
-	return Expression{}, false
+	return nil, false
 }
 
 func (c *Client) tryUpdateTimeConfig() {
@@ -108,7 +128,7 @@ func (c *Client) tryUpdateTimeConfig() {
 	zap.S().Info("exec time config updated")
 }
 
-func (c *Client) trySendResult(exp Expression) {
+func (c *Client) trySendResult(exp *Expression) {
 	// try 10 times
 	for i := 0; i < 10; i++ {
 		zap.S().Info("try to send result")
@@ -125,7 +145,7 @@ func (c *Client) trySendResult(exp Expression) {
 	}
 }
 
-func (c *Client) keepAliveExpression(exp Expression, done <-chan bool, ticker *time.Ticker) {
+func (c *Client) keepAliveExpression(exp *Expression, done <-chan bool, ticker *time.Ticker) {
 	for {
 		select {
 		case <-done:
@@ -133,7 +153,7 @@ func (c *Client) keepAliveExpression(exp Expression, done <-chan bool, ticker *t
 			return
 		case <-ticker.C:
 			zap.S().Info("send alive")
-			err := c.SendAlive(exp)
+			err := c.KeepAlive(exp)
 			if err != nil {
 				zap.S().Error(err)
 			}
@@ -143,7 +163,7 @@ func (c *Client) keepAliveExpression(exp Expression, done <-chan bool, ticker *t
 
 func (c *Client) Run() {
 	for {
-		exp := Expression{}
+		exp := &Expression{}
 		var ok bool
 		for {
 			exp, ok = c.tryGetUpdates()
@@ -184,24 +204,29 @@ type AnsGetUpdates struct {
 }
 
 // GetUpdates returns all expressions for calculation.
-func (c *Client) GetUpdates() ([]Expression, error) {
-	resp, err := http.Get(c.storageServer + "/getUpdates")
+func (c *Client) GetUpdates() ([]*Expression, error) {
+	updates, err := c.gRPCClient.GetUpdates(
+		context.Background(),
+		&Empty{},
+	)
+
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	res := make([]*Expression, 0)
+	for {
+		expression, err := updates.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, expression)
 	}
 
-	var ans AnsGetUpdates
-	if err = json.Unmarshal(body, &ans); err != nil {
-		return nil, err
-	}
-
-	return ans.Tasks, nil
+	return res, nil
 }
 
 type SendConfirmStartOfCalculating struct {
@@ -214,29 +239,16 @@ type AnsConfirmStartOfCalculating struct {
 }
 
 // TryToConfirm returns true if the expression is not being calculated by another server.
-func (c *Client) TryToConfirm(expression Expression) (bool, error) {
-	data := SendConfirmStartOfCalculating{Expression: expression}
-	body, err := json.Marshal(data)
-	if err != nil {
-		return false, err
+func (c *Client) TryToConfirm(expression *Expression) (bool, error) {
+	confirm, err := c.gRPCClient.ConfirmStartCalculating(
+		context.Background(),
+		expression,
+	)
+	if confirm == nil {
+		return false, fmt.Errorf("confirm is nil")
 	}
 
-	resp, err := http.Post(c.storageServer+"/confirmStartCalculating", "application/json", strings.NewReader(string(body)))
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return false, err
-	}
-
-	var ans AnsConfirmStartOfCalculating
-	if err = json.Unmarshal(body, &ans); err != nil {
-		return false, err
-	}
-	return ans.Confirm, nil
+	return confirm.Confirm, err
 }
 
 type sendResult struct {
@@ -248,29 +260,16 @@ type AnsSendResult struct {
 }
 
 // SendResult sends the result of the expression to the storage.
-func (c *Client) SendResult(expression Expression) (bool, error) {
-	data := sendResult{Expression: expression}
-	body, err := json.Marshal(data)
-	if err != nil {
-		return false, err
+func (c *Client) SendResult(expression *Expression) (bool, error) {
+	msg, err := c.gRPCClient.PostResult(
+		context.Background(),
+		expression,
+	)
+	if msg == nil {
+		return false, fmt.Errorf("msg is nil")
 	}
 
-	post, err := http.Post(c.storageServer+"/postResult", "application/json", strings.NewReader(string(body)))
-	if err != nil {
-		return false, err
-	}
-	defer post.Body.Close()
-
-	body, err = io.ReadAll(post.Body)
-	if err != nil {
-		return false, err
-	}
-
-	var ans AnsSendResult
-	if err = json.Unmarshal(body, &ans); err != nil {
-		return false, err
-	}
-	return ans.Message == "ok", nil
+	return msg.Message == "ok", err
 }
 
 type AnsGetOperationsAndTimes struct {
@@ -280,25 +279,17 @@ type AnsGetOperationsAndTimes struct {
 
 // GetOperationsAndTimes returns the time for each operation from the storage.
 func (c *Client) GetOperationsAndTimes() (expressionparser.ExecTimeConfig, error) {
-	var ans AnsGetOperationsAndTimes
+	ans, err := c.gRPCClient.GetOperationsAndTimes(
+		context.Background(),
+		&Empty{},
+	)
 
-	resp, err := http.Get(c.storageServer + "/getOperationsAndTimes")
 	if err != nil {
-		return expressionparser.ExecTimeConfig{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return expressionparser.ExecTimeConfig{}, err
-	}
-
-	if err = json.Unmarshal(body, &ans); err != nil {
 		return expressionparser.ExecTimeConfig{}, err
 	}
 
 	var config expressionparser.ExecTimeConfig
-	for key, val := range ans.Data {
+	for key, val := range ans.Operations {
 		switch key {
 		case "+":
 			config.TimeAdd = time.Duration(val) * time.Millisecond
@@ -316,27 +307,15 @@ func (c *Client) GetOperationsAndTimes() (expressionparser.ExecTimeConfig, error
 	return config, nil
 }
 
-type sendAlive struct {
-	Status     string     `json:"status_workers"`
-	Expression Expression `json:"expression"`
-}
-
-func (c *Client) SendAlive(expression Expression) error {
-	var send sendAlive
+func (c *Client) KeepAlive(expression *Expression) error {
+	var send KeepAliveMsg
 	send.Expression = expression
-	send.Status = fmt.Sprintf("%v -> %v from %v workers are runninng to calcualte %v",
+	send.StatusWorkers = fmt.Sprintf("%v -> %v from %v workers are runninng to calcualte %v",
 		time.Now().Format("01-02-2006 15:04:05"), c.expressionParser.GetWorkingWorkers(),
 		c.expressionParser.GetTotalNumberOfWorkers(), expression.Value)
-	body, err := json.Marshal(send)
-	if err != nil {
-		return err
-	}
-
-	resp, err := http.Post(c.storageServer+"/keepAlive", "application/json", strings.NewReader(string(body)))
-
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	return nil
+	_, err := c.gRPCClient.KeepAlive(
+		context.Background(),
+		&send,
+	)
+	return err
 }

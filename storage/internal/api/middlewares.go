@@ -3,31 +3,22 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
 	"net/http"
+	"strings"
 )
-
-type InAuthData struct {
-	Access string `json:"access" binding:"required"`
-}
 
 type OutAuthData struct {
 	Message string `json:"message"`
 }
 
 func (a *API) Auth(c *gin.Context) {
-	var in InAuthData
 	var out OutAuthData
-	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
-		out.Message = err.Error()
-		c.JSON(http.StatusUnauthorized, out)
-		c.Abort()
-		return
-	}
+	access := c.GetHeader("Authorization")
+	access = strings.Replace(access, "Bearer ", "", 1)
 
-	tokenFromString, err := jwt.Parse(in.Access, func(token *jwt.Token) (interface{}, error) {
+	tokenFromString, err := jwt.Parse(access, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
 		}
@@ -37,8 +28,7 @@ func (a *API) Auth(c *gin.Context) {
 
 	if err != nil {
 		out.Message = err.Error()
-		zap.S().Error(out)
-		c.JSON(http.StatusInternalServerError, out)
+		c.JSON(http.StatusUnauthorized, out)
 		c.Abort()
 		return
 	}
@@ -48,7 +38,7 @@ func (a *API) Auth(c *gin.Context) {
 	if !ok {
 		out.Message = "looks like wrong token"
 		zap.S().Error(out)
-		c.JSON(http.StatusBadRequest, out)
+		c.JSON(http.StatusUnauthorized, out)
 		c.Abort()
 		return
 	}
@@ -58,7 +48,7 @@ func (a *API) Auth(c *gin.Context) {
 	if err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
-		c.JSON(http.StatusInternalServerError, out)
+		c.JSON(http.StatusUnauthorized, out)
 		c.Abort()
 		return
 	}

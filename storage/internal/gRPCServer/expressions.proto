@@ -1,0 +1,44 @@
+syntax = "proto3";
+package storage;
+option go_package = "calculationServer/gRPCServer";
+
+message Empty {}
+
+message Message {
+  string message = 1;
+}
+
+message Expression {
+  int64 id = 1;
+  string value = 2;
+  double answer = 3;
+  string logs = 4;
+  int32 status = 5;
+  int64 alive_expires_at = 6;
+  string creation_time = 7;
+  string end_calculation_time = 8;
+  string server_name = 9;
+  int64 user_id = 10;
+}
+
+message Confirm {
+  bool confirm = 1;
+}
+
+message KeepAliveMsg {
+  Expression expression = 1;
+  string StatusWorkers = 2;
+}
+
+message OperationsAndTimes {
+  map<string, int64> operations = 1;
+  string message = 2;
+}
+
+service ExpressionsService {
+  rpc GetUpdates (Empty) returns (stream Expression) {}
+  rpc ConfirmStartCalculating (Expression) returns (Confirm) {}
+  rpc PostResult (Expression) returns (Message) {}
+  rpc KeepAlive (KeepAliveMsg) returns (Empty) {}
+  rpc GetOperationsAndTimes (Empty) returns (OperationsAndTimes) {}
+}

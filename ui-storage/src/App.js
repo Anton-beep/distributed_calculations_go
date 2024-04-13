@@ -5,6 +5,9 @@ import {ViewExpressions} from "./components/ViewExpressions";
 import {Operations} from "./components/Operations";
 import {ComputingPowers} from "./components/ComputingPowers";
 import {Footer} from "./components/Footer";
+import {Register} from "./components/Registration";
+import {Login} from "./components/Login";
+import {Logout} from "./components/Logout";
 
 import {Route, Routes} from 'react-router-dom';
 
@@ -22,6 +25,9 @@ function App() {
             <main>
                 <Routes>
                     <Route path="/" element={<Home/>}/>
+                    <Route path="/register" element={<Register/>}/>
+                    <Route path="/login" element={<Login/>}/>
+                    <Route path="/logout" element={<Logout/>}/>
                     <Route path="/inputExpression" element={<InputExpression/>}/>
                     <Route path="/viewExpressions" element={<ViewExpressions/>}/>
                     <Route path="/operations" element={<Operations/>}/>
