@@ -100,7 +100,7 @@ func (a *API) Login(c *gin.Context) {
 	user, err := a.db.GetUserByUsername(in.Login)
 	if err != nil {
 		out.Message = "user not found"
-		c.JSON(http.StatusNotFound, out)
+		c.JSON(http.StatusBadRequest, out)
 		return
 	}
 

@@ -1,21 +1,15 @@
 import '../App.css'
 import {useEffect, useState} from "react";
+import Auth from "../pkg/Auth";
 
 export const ViewExpressions = () => {
     const [expressions, setExpressions] = useState([])
 
     useEffect(() => {
-        let addr;
-        if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
-            addr = process.env.REACT_APP_STORAGE_API_URL + "/expression"
-        } else {
-            addr = "http://localhost:8080/api/v1/expression"
-        }
-        fetch(addr)
-            .then(response => response.json())
-            .then(data => {
-                data.expressions.sort((a, b) => (a.id > b.id) ? -1 : 1)
-                setExpressions(data.expressions)
+        Auth.axiosInstance.get("/expression")
+            .then(response => {
+                response.data.expressions.sort((a, b) => (a.id > b.id) ? -1 : 1)
+                setExpressions(response.data.expressions)
             })
             .catch(err => {
                 console.log(err)

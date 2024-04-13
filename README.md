@@ -104,7 +104,7 @@ npm run build
 mv build ../out
 cd ..
 ```
-You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env` and `calculationServer/.env`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
+You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env.template`, `calculationServer/.env.template` and `ui-storage/.env.template`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
 ### Run (win):
 ```shell
 cd out
@@ -115,7 +115,11 @@ cd out
 .\calculationServer.exe
 ```
 
-To start more calculation servers, edit `.env` (change name `CALCULATION_SERVER_NAME`) and run `.\calculationServer.exe` in another terminal.
+To start more calculation servers, edit `.env` (change name `CALCULATION_SERVER_NAME`) and run `.\calculationServer.exe` in another terminal:
+```shell
+cd out
+.\calculationServer.exe
+```
 
 API is available at http://localhost:8080/api/v1 and UI at http://localhost:3000.
 

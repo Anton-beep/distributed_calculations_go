@@ -1,20 +1,14 @@
 import '../App.css'
 import {useEffect, useState} from "react";
+import Auth from "../pkg/Auth";
 
 export const ComputingPowers = () => {
     const [servers, setServers] = useState(null)
 
     useEffect(() => {
-        let addr;
-        if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
-            addr = process.env.REACT_APP_STORAGE_API_URL + "/getComputingPowers"
-        } else {
-            addr = "http://localhost:8080/api/v1/getComputingPowers"
-        }
-        fetch(addr)
-            .then(response => response.json())
-            .then(data => {
-                setServers(data.servers)
+        Auth.axiosInstance.get('/getComputingPowers')
+            .then(response => {
+                setServers(response.data.servers)
             })
             .catch(err => console.log(err));
     }, []);
@@ -42,7 +36,7 @@ export const ComputingPowers = () => {
             <div className="scrollable-div">
                 <ul className="list-group list-group-horizontal">
                     <li className="list-group-item">Server Name</li>
-                    <li className="list-group-item">Status</li>
+                    <li className="list-group-item">Live Status</li>
                     <li className="list-group-item">Calculated Expressions IDs</li>
                 </ul>
                 {showServers()}

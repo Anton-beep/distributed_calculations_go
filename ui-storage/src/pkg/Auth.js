@@ -4,7 +4,7 @@ import axios from 'axios';
 class Auth {
     constructor() {
         this.axiosInstance = axios.create({
-            baseURL: "", //process.env.REACT_APP_STORAGE_API_URL
+            baseURL: process.env.REACT_APP_STORAGE_API_URL,
             timeout: 5000,
             headers: {
                 'Content-Type': 'application/json',
@@ -17,7 +17,6 @@ class Auth {
                 if (token) {
                     config.headers.Authorization = 'Bearer ' + token;
                 }
-                console.log(config);
                 return config;
             },
             (error) => {
@@ -36,18 +35,6 @@ class Auth {
                 return Promise.reject(error);
             }
         )
-    }
-
-    login(login, password) {
-        return this.axiosInstance.post('http://127.0.0.1:8080/api/v1/login', {
-            "login": login,
-            "password": password
-        }, {"method": "POST"})
-            .then(response => {
-                if (response.status === 200) {
-                    Cookies.set('token', response.data.token);
-                }
-            })
     }
 }
 

@@ -1,5 +1,6 @@
 import '../App.css'
 import {useEffect, useState} from "react";
+import Auth from "../pkg/Auth";
 
 export const Operations = () => {
     const [operations, setOperations] = useState(null)
@@ -8,16 +9,9 @@ export const Operations = () => {
     const [mainError, setMainError] = useState(false)
 
     useEffect(() => {
-        let addr;
-        if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
-            addr = process.env.REACT_APP_STORAGE_API_URL + "/getOperationsAndTimes"
-        } else {
-            addr = "http://localhost:8080/api/v1/getOperationsAndTimes"
-        }
-        fetch(addr)
-            .then(response => response.json())
-            .then(data => {
-                setOperations(data.data)
+        Auth.axiosInstance.get("/getOperationsAndTimes")
+            .then(response => {
+                setOperations(response.data.data)
             })
             .catch(err => {
                 setMainError(true);
@@ -76,19 +70,7 @@ export const Operations = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        let addr;
-        if (process.env.REACT_APP_STORAGE_API_URL === undefined) {
-            addr = process.env.REACT_APP_STORAGE_API_URL + "/postOperationsAndTimes"
-        } else {
-            addr = "http://localhost:8080/api/v1/postOperationsAndTimes"
-        }
-        fetch(addr, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(operations)
-        })
+        Auth.axiosInstance.post("/postOperationsAndTimes", operations)
             .then(response => {
                 if (response.status === 200) {
                     setMainError(false);

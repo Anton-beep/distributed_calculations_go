@@ -45,8 +45,8 @@ func (a *API) Start() *gin.Engine {
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowHeaders = []string{"Authorization", "Content-Type"}
 	config.AllowAllOrigins = true
+	config.AllowHeaders = []string{"Authorization", "Content-Type"}
 	router.Use(cors.New(config))
 
 	router.GET("/api/v1/ping", a.Ping)
