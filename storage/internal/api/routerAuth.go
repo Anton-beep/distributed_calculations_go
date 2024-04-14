@@ -11,6 +11,18 @@ import (
 	"time"
 )
 
+func makeToken(login string, secretSignature []byte) (string, error) {
+	now := time.Now()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"name": login,
+		"nbf":  now.Unix(),
+		"exp":  now.Add(5 * time.Minute).Unix(),
+		"iat":  now.Unix(),
+	})
+
+	return token.SignedString(secretSignature)
+}
+
 type InRegister struct {
 	Login    string `json:"login" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -21,6 +33,19 @@ type OutRegister struct {
 	Message string `json:"message"`
 }
 
+// Register godoc
+//
+//	@Summary		Register
+//	@Description	Register new user
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			login		body		InRegister	true	"Login"
+//	@Param			password	body		InRegister	true	"Password"
+//	@Success		200			{object}	OutRegister
+//	@Failure		400			{object}	OutRegister
+//	@Failure		409			{object}	OutRegister
+//	@Router			/register [post]
 func (a *API) Register(c *gin.Context) {
 	var in InRegister
 	var out OutRegister
@@ -38,15 +63,7 @@ func (a *API) Register(c *gin.Context) {
 		return
 	}
 
-	now := time.Now()
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"name": in.Login,
-		"nbf":  now.Unix(),
-		"exp":  now.Add(5 * time.Minute).Unix(),
-		"iat":  now.Unix(),
-	})
-
-	tokenString, err := token.SignedString(a.secretSignature)
+	tokenString, err := makeToken(in.Login, a.secretSignature)
 	if err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
@@ -123,15 +140,7 @@ func (a *API) Login(c *gin.Context) {
 		return
 	}
 
-	now := time.Now()
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"name": in.Login,
-		"nbf":  now.Unix(),
-		"exp":  now.Add(5 * time.Minute).Unix(),
-		"iat":  now.Unix(),
-	})
-
-	tokenString, err := token.SignedString(a.secretSignature)
+	tokenString, err := makeToken(in.Login, a.secretSignature)
 	if err != nil {
 		out.Message = err.Error()
 		zap.S().Error(out)
@@ -147,6 +156,17 @@ type OutGetUser struct {
 	Login string `json:"login"`
 }
 
+// GetUser godoc
+//
+//	@Summary		Get user
+//	@Description	Get user info
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	OutGetUser
+//	@Failure		400	{object}	OutGetUser
+//	@Failure		500	{object}	OutGetUser
+//	@Router			/getUser [get]
 func (a *API) GetUser(c *gin.Context) {
 	user := c.MustGet("user")
 	c.JSON(http.StatusOK, OutGetUser{
@@ -160,9 +180,29 @@ type InUpdateUser struct {
 	Login       string `json:"login"`
 }
 
+type OutUpdateUser struct {
+	Access  string `json:"access"`
+	Message string `json:"message"`
+}
+
+// UpdateUser godoc
+//
+//	@Summary		Update user
+//	@Description	Update user info
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			login			body		InUpdateUser	false	"New login"
+//	@Param			password		body		InUpdateUser	false	"New password"
+//	@Param			old_password	body		InUpdateUser	false	"Old password"
+//	@Success		200				{object}	OutRegister
+//	@Failure		400				{object}	OutRegister
+//	@Failure		401				{object}	OutRegister
+//	@Failure		500				{object}	OutRegister
+//	@Router			/updateUser [post]
 func (a *API) UpdateUser(c *gin.Context) {
 	var in InUpdateUser
-	var out OutRegister
+	var out OutUpdateUser
 	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
 		out.Message = err.Error()
 		c.JSON(http.StatusBadRequest, out)
@@ -173,26 +213,20 @@ func (a *API) UpdateUser(c *gin.Context) {
 	u := c.MustGet("user")
 	user := u.(db.User)
 
-	if in.OldPassword != "" || in.NewPassword != "" {
-		if in.OldPassword == "" {
-			out.Message = "old password is empty"
-			c.JSON(http.StatusBadRequest, out)
-			return
-		}
+	if in.OldPassword == "" {
+		out.Message = "old password is empty"
+		c.JSON(http.StatusBadRequest, out)
+		return
+	}
 
-		if in.NewPassword == "" {
-			out.Message = "new password is empty"
-			c.JSON(http.StatusBadRequest, out)
-			return
-		}
+	err := cryptPasswords.ComparePasswordWithHash(user.Password, in.OldPassword)
+	if err != nil {
+		out.Message = "wrong password"
+		c.JSON(http.StatusBadRequest, out)
+		return
+	}
 
-		err := cryptPasswords.ComparePasswordWithHash(user.Password, in.OldPassword)
-		if err != nil {
-			out.Message = "wrong password"
-			c.JSON(http.StatusUnauthorized, out)
-			return
-		}
-
+	if in.NewPassword != "" {
 		hash, err := cryptPasswords.GeneratePasswordHash(in.NewPassword)
 		if err != nil {
 			out.Message = err.Error()
@@ -209,6 +243,15 @@ func (a *API) UpdateUser(c *gin.Context) {
 			return
 		}
 
+		// make new token
+		tokenString, err := makeToken(in.Login, a.secretSignature)
+		if err != nil {
+			out.Message = err.Error()
+			zap.S().Error(out)
+			c.JSON(http.StatusInternalServerError, out)
+		}
+
+		out.Access = tokenString
 		out.Message = "ok"
 		c.JSON(http.StatusOK, out)
 	} else if in.Login != "" {
@@ -220,6 +263,15 @@ func (a *API) UpdateUser(c *gin.Context) {
 			return
 		}
 
+		// make new token
+		tokenString, err := makeToken(in.Login, a.secretSignature)
+		if err != nil {
+			out.Message = err.Error()
+			zap.S().Error(out)
+			c.JSON(http.StatusInternalServerError, out)
+		}
+
+		out.Access = tokenString
 		out.Message = "ok"
 		c.JSON(http.StatusOK, out)
 	} else {

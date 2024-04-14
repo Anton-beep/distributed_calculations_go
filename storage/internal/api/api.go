@@ -57,7 +57,6 @@ func (a *API) Start() *gin.Engine {
 	// for users
 	router.POST("/api/v1/register", a.Register)
 	router.POST("/api/v1/login", a.Login)
-	router.GET("/api/v1/login", a.Login)
 
 	authorized.GET("/getUser", a.GetUser)
 	authorized.POST("/updateUser", a.UpdateUser)

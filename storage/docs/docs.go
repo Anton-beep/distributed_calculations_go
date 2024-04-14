@@ -15,52 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/confirmStartCalculating": {
-            "post": {
-                "description": "Confirm start calculating for expression to coordinate work of calculation servers",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "updates (used by calculation server)"
-                ],
-                "summary": "Confirm start calculating",
-                "parameters": [
-                    {
-                        "description": "Expression",
-                        "name": "expression",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.InConfirmStartOfCalculating"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.OutConfirmStartOfCalculating"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/api.OutConfirmStartOfCalculating"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/api.OutConfirmStartOfCalculating"
-                        }
-                    }
-                }
-            }
-        },
         "/expression": {
             "get": {
                 "description": "Get all expressions from storage",
@@ -254,9 +208,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/getUpdates": {
+        "/getUser": {
             "get": {
-                "description": "Get not working expressions for calculation server",
+                "description": "Get user info",
                 "consumes": [
                     "application/json"
                 ],
@@ -264,60 +218,26 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "updates (used by calculation server)"
+                    "auth"
                 ],
-                "summary": "Get updates",
+                "summary": "Get user",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.OutGetUpdates"
-                        }
-                    }
-                }
-            }
-        },
-        "/keepAlive": {
-            "post": {
-                "description": "Keep alive for expression to coordinate work of calculation servers",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "updates (used by calculation server)"
-                ],
-                "summary": "Keep alive",
-                "parameters": [
-                    {
-                        "description": "Expression",
-                        "name": "expression",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/api.InKeepAlive"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.OutPing"
+                            "$ref": "#/definitions/api.OutGetUser"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.OutPing"
+                            "$ref": "#/definitions/api.OutGetUser"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.OutPing"
+                            "$ref": "#/definitions/api.OutGetUser"
                         }
                     }
                 }
@@ -389,9 +309,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/postResult": {
+        "/register": {
             "post": {
-                "description": "Post result of the calculation",
+                "description": "Register new user",
                 "consumes": [
                     "application/json"
                 ],
@@ -399,17 +319,26 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "updates (used by calculation server)"
+                    "auth"
                 ],
-                "summary": "Post result",
+                "summary": "Register",
                 "parameters": [
                     {
-                        "description": "Expression",
-                        "name": "expression",
+                        "description": "Login",
+                        "name": "login",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/api.InPostResult"
+                            "$ref": "#/definitions/api.InRegister"
+                        }
+                    },
+                    {
+                        "description": "Password",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.InRegister"
                         }
                     }
                 ],
@@ -417,19 +346,86 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.OutPostResult"
+                            "$ref": "#/definitions/api.OutRegister"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.OutPostResult"
+                            "$ref": "#/definitions/api.OutRegister"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutRegister"
+                        }
+                    }
+                }
+            }
+        },
+        "/updateUser": {
+            "post": {
+                "description": "Update user info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "description": "New login",
+                        "name": "login",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/api.InUpdateUser"
+                        }
+                    },
+                    {
+                        "description": "New password",
+                        "name": "password",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/api.InUpdateUser"
+                        }
+                    },
+                    {
+                        "description": "Old password",
+                        "name": "old_password",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/api.InUpdateUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutRegister"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutRegister"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/api.OutRegister"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/api.OutPostResult"
+                            "$ref": "#/definitions/api.OutRegister"
                         }
                     }
                 }
@@ -437,17 +433,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "api.InConfirmStartOfCalculating": {
-            "type": "object",
-            "required": [
-                "expression"
-            ],
-            "properties": {
-                "expression": {
-                    "$ref": "#/definitions/db.Expression"
-                }
-            }
-        },
         "api.InGetExpressionByID": {
             "type": "object",
             "required": [
@@ -470,21 +455,6 @@ const docTemplate = `{
                 }
             }
         },
-        "api.InKeepAlive": {
-            "type": "object",
-            "required": [
-                "expression",
-                "status_workers"
-            ],
-            "properties": {
-                "expression": {
-                    "$ref": "#/definitions/db.Expression"
-                },
-                "status_workers": {
-                    "type": "string"
-                }
-            }
-        },
         "api.InPostExpression": {
             "type": "object",
             "required": [
@@ -496,24 +466,31 @@ const docTemplate = `{
                 }
             }
         },
-        "api.InPostResult": {
+        "api.InRegister": {
             "type": "object",
             "required": [
-                "expression"
+                "login",
+                "password"
             ],
             "properties": {
-                "expression": {
-                    "$ref": "#/definitions/db.Expression"
+                "login": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
                 }
             }
         },
-        "api.OutConfirmStartOfCalculating": {
+        "api.InUpdateUser": {
             "type": "object",
             "properties": {
-                "confirm": {
-                    "type": "boolean"
+                "login": {
+                    "type": "string"
                 },
-                "message": {
+                "old_password": {
+                    "type": "string"
+                },
+                "password": {
                     "type": "string"
                 }
             }
@@ -600,20 +577,11 @@ const docTemplate = `{
                 }
             }
         },
-        "api.OutGetUpdates": {
+        "api.OutGetUser": {
             "type": "object",
-            "required": [
-                "tasks"
-            ],
             "properties": {
-                "message": {
+                "login": {
                     "type": "string"
-                },
-                "tasks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/db.Expression"
-                    }
                 }
             }
         },
@@ -636,9 +604,12 @@ const docTemplate = `{
                 }
             }
         },
-        "api.OutPostResult": {
+        "api.OutRegister": {
             "type": "object",
             "properties": {
+                "access": {
+                    "type": "string"
+                },
                 "message": {
                     "type": "string"
                 }
@@ -655,7 +626,7 @@ const docTemplate = `{
         "db.Expression": {
             "type": "object",
             "properties": {
-                "alive_experise_at": {
+                "alive_expires_at": {
                     "type": "integer"
                 },
                 "answer": {
@@ -679,6 +650,9 @@ const docTemplate = `{
                 },
                 "server_name": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 },
                 "value": {
                     "type": "string"

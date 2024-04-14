@@ -8,6 +8,7 @@ import {Footer} from "./components/Footer";
 import {Register} from "./components/Registration";
 import {Login} from "./components/Login";
 import {Logout} from "./components/Logout";
+import {Profile} from "./components/Profile";
 
 import {Route, Routes} from 'react-router-dom';
 
@@ -27,6 +28,7 @@ function App() {
                     <Route path="/" element={<Home/>}/>
                     <Route path="/register" element={<Register/>}/>
                     <Route path="/login" element={<Login/>}/>
+                    <Route path="/profile" element={<Profile/>}/>
                     <Route path="/logout" element={<Logout/>}/>
                     <Route path="/inputExpression" element={<InputExpression/>}/>
                     <Route path="/viewExpressions" element={<ViewExpressions/>}/>

@@ -155,6 +155,7 @@ When all instructions are calculated, the result is sent to the storage server.
 ![computingPowers](assets/computingPowers.png)
 
 # Tests
+You can find integration and unit tests in `calculationServer/tests` and `storage/tests`.\
 For storage testing database is required (see **Database Start** section), also do not forget to change `calculationServer/tests/config_test.go` and `storage/tests/config_test.go` to specify where is postgresql database, number of calculators, and secret key.\
 To run tests:
 ````shell
@@ -164,3 +165,16 @@ cd ..
 cd storage
 go test -v ./tests/...
 ````
+
+
+
+# Build gRPC
+To build gRPC you need to have `protoc` installed.
+```shell
+cd calculationServer/internal/storageclient
+protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative expressions.proto
+```
+```shell
+cd storage/internal/gRPCServer
+protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative expressions.proto
+```

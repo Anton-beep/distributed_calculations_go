@@ -1,12 +1,5 @@
 basePath: /api/v1.
 definitions:
-  api.InConfirmStartOfCalculating:
-    properties:
-      expression:
-        $ref: '#/definitions/db.Expression'
-    required:
-    - expression
-    type: object
   api.InGetExpressionByID:
     properties:
       id:
@@ -21,16 +14,6 @@ definitions:
     required:
     - server_name
     type: object
-  api.InKeepAlive:
-    properties:
-      expression:
-        $ref: '#/definitions/db.Expression'
-      status_workers:
-        type: string
-    required:
-    - expression
-    - status_workers
-    type: object
   api.InPostExpression:
     properties:
       expression:
@@ -38,18 +21,23 @@ definitions:
     required:
     - expression
     type: object
-  api.InPostResult:
+  api.InRegister:
     properties:
-      expression:
-        $ref: '#/definitions/db.Expression'
+      login:
+        type: string
+      password:
+        type: string
     required:
-    - expression
+    - login
+    - password
     type: object
-  api.OutConfirmStartOfCalculating:
+  api.InUpdateUser:
     properties:
-      confirm:
-        type: boolean
-      message:
+      login:
+        type: string
+      old_password:
+        type: string
+      password:
         type: string
     type: object
   api.OutGetAllExpressions:
@@ -105,16 +93,10 @@ definitions:
       message:
         type: string
     type: object
-  api.OutGetUpdates:
+  api.OutGetUser:
     properties:
-      message:
+      login:
         type: string
-      tasks:
-        items:
-          $ref: '#/definitions/db.Expression'
-        type: array
-    required:
-    - tasks
     type: object
   api.OutPing:
     properties:
@@ -128,8 +110,10 @@ definitions:
       message:
         type: string
     type: object
-  api.OutPostResult:
+  api.OutRegister:
     properties:
+      access:
+        type: string
       message:
         type: string
     type: object
@@ -140,7 +124,7 @@ definitions:
     type: object
   db.Expression:
     properties:
-      alive_experise_at:
+      alive_expires_at:
         type: integer
       answer:
         type: number
@@ -157,6 +141,8 @@ definitions:
         type: integer
       server_name:
         type: string
+      user_id:
+        type: integer
       value:
         type: string
     type: object
@@ -167,37 +153,6 @@ info:
   title: Swagger Storage API
   version: "1.0"
 paths:
-  /confirmStartCalculating:
-    post:
-      consumes:
-      - application/json
-      description: Confirm start calculating for expression to coordinate work of
-        calculation servers
-      parameters:
-      - description: Expression
-        in: body
-        name: expression
-        required: true
-        schema:
-          $ref: '#/definitions/api.InConfirmStartOfCalculating'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.OutConfirmStartOfCalculating'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.OutConfirmStartOfCalculating'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.OutConfirmStartOfCalculating'
-      summary: Confirm start calculating
-      tags:
-      - updates (used by calculation server)
   /expression:
     get:
       consumes:
@@ -325,51 +280,29 @@ paths:
       summary: Get operations and times
       tags:
       - operations
-  /getUpdates:
+  /getUser:
     get:
       consumes:
       - application/json
-      description: Get not working expressions for calculation server
+      description: Get user info
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.OutGetUpdates'
-      summary: Get updates
-      tags:
-      - updates (used by calculation server)
-  /keepAlive:
-    post:
-      consumes:
-      - application/json
-      description: Keep alive for expression to coordinate work of calculation servers
-      parameters:
-      - description: Expression
-        in: body
-        name: expression
-        required: true
-        schema:
-          $ref: '#/definitions/api.InKeepAlive'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/api.OutPing'
+            $ref: '#/definitions/api.OutGetUser'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.OutPing'
+            $ref: '#/definitions/api.OutGetUser'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.OutPing'
-      summary: Keep alive
+            $ref: '#/definitions/api.OutGetUser'
+      summary: Get user
       tags:
-      - updates (used by calculation server)
+      - auth
   /ping:
     get:
       consumes:
@@ -414,34 +347,83 @@ paths:
       summary: Set operations and times
       tags:
       - operations
-  /postResult:
+  /register:
     post:
       consumes:
       - application/json
-      description: Post result of the calculation
+      description: Register new user
       parameters:
-      - description: Expression
+      - description: Login
         in: body
-        name: expression
+        name: login
         required: true
         schema:
-          $ref: '#/definitions/api.InPostResult'
+          $ref: '#/definitions/api.InRegister'
+      - description: Password
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/api.InRegister'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.OutPostResult'
+            $ref: '#/definitions/api.OutRegister'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.OutPostResult'
+            $ref: '#/definitions/api.OutRegister'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/api.OutRegister'
+      summary: Register
+      tags:
+      - auth
+  /updateUser:
+    post:
+      consumes:
+      - application/json
+      description: Update user info
+      parameters:
+      - description: New login
+        in: body
+        name: login
+        schema:
+          $ref: '#/definitions/api.InUpdateUser'
+      - description: New password
+        in: body
+        name: password
+        schema:
+          $ref: '#/definitions/api.InUpdateUser'
+      - description: Old password
+        in: body
+        name: old_password
+        schema:
+          $ref: '#/definitions/api.InUpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.OutRegister'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.OutRegister'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/api.OutRegister'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.OutPostResult'
-      summary: Post result
+            $ref: '#/definitions/api.OutRegister'
+      summary: Update user
       tags:
-      - updates (used by calculation server)
+      - auth
 swagger: "2.0"
