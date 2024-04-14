@@ -60,19 +60,6 @@ func (a *APIDb) GetExpressionByID(id int) (Expression, error) {
 	return expression, nil
 }
 
-func (a *APIDb) GetExpressionByUserAndID(id int) (Expression, error) {
-	expression := Expression{}
-	err := a.db.QueryRow("SELECT * FROM expressions WHERE id=$1 AND user_id=$2", id).
-		Scan(&expression.ID, &expression.Value, &expression.Answer, &expression.Logs, &expression.Status,
-			&expression.AliveExpiresAt, &expression.CreationTime, &expression.EndCalculationTime, &expression.Servername,
-			&expression.User)
-	if err != nil {
-		return expression, err
-	}
-	return expression, nil
-
-}
-
 func (a *APIDb) AddExpression(expression Expression) (int, error) {
 	var id int
 	err := a.db.QueryRow("INSERT INTO expressions(value, answer, logs, ready, alive_expires_at, creation_time,"+

@@ -35,5 +35,11 @@ func main() {
 	if err != nil {
 		zap.S().Fatal(err)
 	}
-	c.Run()
+	err = c.SetupgRPCServer()
+	if err != nil {
+		zap.S().Fatal(err)
+	}
+
+	go c.Run()
+
 }

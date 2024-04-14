@@ -6,16 +6,6 @@ type User struct {
 	Password string `db:"password" json:"password"`
 }
 
-func (a *APIDb) GetUserById(id int) (User, error) {
-	user := User{}
-	err := a.db.QueryRow("SELECT * FROM users WHERE id=$1", id).
-		Scan(&user.ID, &user.Login, &user.Password)
-	if err != nil {
-		return user, err
-	}
-	return user, nil
-}
-
 func (a *APIDb) GetUserByUsername(username string) (User, error) {
 	user := User{}
 	err := a.db.QueryRow("SELECT * FROM users WHERE login=$1", username).
@@ -49,13 +39,4 @@ func (a *APIDb) UpdateUser(user User) error {
 		return err
 	}
 	return nil
-}
-
-func (a *APIDb) GetLastIdUsers() (int, error) {
-	var id int
-	err := a.db.QueryRow("SELECT id FROM users ORDER BY id DESC LIMIT 1").Scan(&id)
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
 }

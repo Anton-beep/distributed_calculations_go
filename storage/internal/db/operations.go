@@ -35,3 +35,19 @@ func (a *APIDb) UpdateOperation(operation Operation) error {
 	}
 	return nil
 }
+
+func (a *APIDb) DeleteOperation(id int) error {
+	_, err := a.db.Exec("DELETE FROM operations WHERE id=$1", id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *APIDb) DeleteByUserId(userId int) error {
+	_, err := a.db.Exec("DELETE FROM operations WHERE user_id=$1", userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

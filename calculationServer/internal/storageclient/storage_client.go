@@ -47,14 +47,6 @@ func New() (*Client, error) {
 	c := &Client{}
 	c.storageServer = os.Getenv("STORAGE_URL")
 
-	conn, err := grpc.Dial(c.storageServer, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, err
-	}
-	c.connection = conn
-
-	c.gRPCClient = NewExpressionsServiceClient(conn)
-
 	c.expressionParser = expressionparser.New()
 
 	num, err := strconv.Atoi(os.Getenv("NUMBER_OF_CALCULATORS"))
@@ -77,6 +69,23 @@ func New() (*Client, error) {
 		c.serverName = "noname"
 	}
 	return c, nil
+}
+
+func (c *Client) SetupgRPCServer() error {
+	conn, err := grpc.Dial(c.storageServer, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	c.connection = conn
+
+	c.gRPCClient = NewExpressionsServiceClient(conn)
+
+	return nil
+}
+
+func (c *Client) SetConnection(conn *grpc.ClientConn) {
+	c.connection = conn
+	c.gRPCClient = NewExpressionsServiceClient(conn)
 }
 
 func (c *Client) CloseConn() error {

@@ -208,6 +208,8 @@ func (a *API) UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, out)
 		return
 	}
+	updated := false
+	var tokenString string
 
 	// check if user exists
 	u := c.MustGet("user")
@@ -244,17 +246,16 @@ func (a *API) UpdateUser(c *gin.Context) {
 		}
 
 		// make new token
-		tokenString, err := makeToken(in.Login, a.secretSignature)
+		tokenString, err = makeToken(in.Login, a.secretSignature)
 		if err != nil {
 			out.Message = err.Error()
 			zap.S().Error(out)
 			c.JSON(http.StatusInternalServerError, out)
 		}
 
-		out.Access = tokenString
-		out.Message = "ok"
-		c.JSON(http.StatusOK, out)
-	} else if in.Login != "" {
+		updated = true
+	}
+	if in.Login != "" {
 		user.Login = in.Login
 		if err := a.db.UpdateUser(user); err != nil {
 			out.Message = err.Error()
@@ -264,13 +265,16 @@ func (a *API) UpdateUser(c *gin.Context) {
 		}
 
 		// make new token
-		tokenString, err := makeToken(in.Login, a.secretSignature)
+		tokenString, err = makeToken(in.Login, a.secretSignature)
 		if err != nil {
 			out.Message = err.Error()
 			zap.S().Error(out)
 			c.JSON(http.StatusInternalServerError, out)
 		}
 
+		updated = true
+	}
+	if updated {
 		out.Access = tokenString
 		out.Message = "ok"
 		c.JSON(http.StatusOK, out)

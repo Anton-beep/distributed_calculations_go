@@ -115,7 +115,9 @@ func (s *Server) PostResult(_ context.Context, e *Expression) (*Message, error) 
 		return nil, err
 	}
 	if !ok {
-		return nil, err
+		return &Message{
+			Message: "expression is not in working",
+		}, err
 	}
 
 	expression.EndCalculationTime = time.Now().Format("2006-01-02 15:04:05")

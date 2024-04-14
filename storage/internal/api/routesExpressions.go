@@ -186,7 +186,7 @@ func (a *API) GetOperationsAndTimes(c *gin.Context) {
 	c.JSON(http.StatusOK, OutGetOperationsAndTimes{Data: outMap, Message: "ok"})
 }
 
-type OutSetOperationsAndTimes struct {
+type OutPostOperationsAndTimes struct {
 	Message string `json:"message"`
 }
 
@@ -198,14 +198,14 @@ type OutSetOperationsAndTimes struct {
 //	@Accept			json
 //	@Produce		json
 //	@Param			data	body		map[string]int	true	"Operations and times"
-//	@Success		200		{object}	OutSetOperationsAndTimes
-//	@Failure		400		{object}	OutSetOperationsAndTimes
+//	@Success		200		{object}	OutPostOperationsAndTimes
+//	@Failure		400		{object}	OutPostOperationsAndTimes
 //	@Router			/postOperationsAndTimes [post]
 func (a *API) PostOperationsAndTimes(c *gin.Context) {
 	var in map[string]int
 
 	if err := c.ShouldBindBodyWith(&in, binding.JSON); err != nil {
-		out := OutSetOperationsAndTimes{Message: err.Error()}
+		out := OutPostOperationsAndTimes{Message: err.Error()}
 		zap.S().Error(out)
 		c.JSON(http.StatusBadRequest, out)
 		return
@@ -213,7 +213,7 @@ func (a *API) PostOperationsAndTimes(c *gin.Context) {
 
 	operations, err := a.db.GetUserOperations(c.MustGet("user").(db.User).ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, OutSetOperationsAndTimes{Message: err.Error()})
+		c.JSON(http.StatusInternalServerError, OutPostOperationsAndTimes{Message: err.Error()})
 		return
 	}
 
@@ -237,7 +237,7 @@ func (a *API) PostOperationsAndTimes(c *gin.Context) {
 
 	err = a.db.UpdateOperation(operations)
 
-	out := OutSetOperationsAndTimes{Message: msg}
+	out := OutPostOperationsAndTimes{Message: msg}
 	c.JSON(http.StatusOK, out)
 }
 

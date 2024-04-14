@@ -1,4 +1,4 @@
-package tests_test
+package tests
 
 import (
 	"calculationServer/pkg/expressionparser"
