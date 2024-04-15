@@ -16,10 +16,22 @@ services:
       - 50051:50051
     depends_on:
       - ant-db
-      - ant-calculation-server
+      - ant-calculation-server-1
+      - ant-calculation-server-2
+      - ant-calculation-server-3
       - ant-ui-storage
 
-  ant-calculation-server:
+  ant-calculation-server-1:
+    env_file:
+      - calculationServer/.env
+    build: ./calculationServer
+
+  ant-calculation-server-2:
+    env_file:
+      - calculationServer/.env
+    build: ./calculationServer
+
+  ant-calculation-server-3:
     env_file:
       - calculationServer/.env
     build: ./calculationServer

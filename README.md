@@ -24,63 +24,22 @@ Create `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specif
 ### Ui-storage
 - `REACT_APP_STORAGE_API_URL` - URL of storage server
 
-# Database Start
+# Run
 ***Docker is required! ([install](https://docs.docker.com/engine/install/))***
-
+## Run With Docker
 ```shell
-docker run --name ant-db -p 5432:5432 -e  POSTGRES_USER=user -e POSTGRES_PASSWORD=password -d postgres:16
+docker-compose up
 ```
 
-You can also specify local directory for database storage using: `-v <local path>:/var/lib/postgresql/data postgres:16`
-
-*Based on https://hub.docker.com/_/postgres*
-
-You can also start docker somehow else.
-
-When docker is running, you need to reset it, before program can use it, so on the first start of `storage/main.go` set in your `storage/.env` `RESET_POSTGRESQL=TRUE`. After the first start, do not forget to set `RESET_POSTGREQL` to `FALSE`, or it will wipe data.
-
-***If you want to use exist database, make sure that you don't have table expressions! Storage will reset this table on a start!***
-
-# Build and Run
-## Release
-See release section on github if your os is windows, if linux see build section below.
-## Docker
-### If you do not want to use .env files
+## Run From Releases (windows)
+Start database:
 ```shell
-cd calculationServer
-docker build -t calculation-server .
-docker run -d --name ant-calculation-server -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName calculation-server
-docker run -d --name ant-calculation-server2 -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName2 calculation-server
-docker run -d --name ant-calculation-server3 -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName3 calculation-server
-cd ..
-cd storage
-docker build -t storage .
-docker run -p 8080:8080 -d --name ant-storage -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=password -e POSTGRESQL_DB=postgres -e POSTGRESQL_HOST=host.docker.internal -e POSTGRESQL_PORT=5432 -e RESET_POSTGRESQL=FALSE -e CHECK_SERVER_DURATION=5 storage
-cd ..
-cd ui-storage
-docker build -t ui-storage .
-docker run -p 3000:3000 -d --name ant-ui-storage ui-storage
+docker run --name db -p 5432:5432 -e  POSTGRES_USER=user -e POSTGRES_PASSWORD=password -d postgres:16
 ```
 
-### If you want to use .env files
-Configure three `.env` files (see **Configure (using .env)** section) and then run:
-```shell
-cd calculationServer
-docker build -t calculation-server .
-docker run --env-file .env -d --name ant-calculation-server calculation-server
-cd ..
-cd storage
-docker build -t storage .
-docker run --env-file .env -p 8080:8080 -d --name ant-storage storage
-cd ..
-cd ui-storage
-docker build -t ui-storage .
-docker run --env-file .env -p 3000:3000 -d --name ant-ui-storage ui-storage
-```
+Check [releases](https://github.com/Anton-beep/distributed_calculations_go/releases/latest) and download the latest version.
 
-To run more calculation servers edit `.env` and run it again with a different container name.
-
-## Not Docker
+# Build
 If you have error in powershell `cannot be loaded because running scripts is disabled on this
 system.` you can [fix it](https://stackoverflow.com/questions/54776324/powershell-bug-execution-of-scripts-is-disabled-on-this-system) or run commands in CMD.
 ### Go
@@ -105,21 +64,6 @@ mv build ../out
 cd ..
 ```
 You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env.template`, `calculationServer/.env.template` and `ui-storage/.env.template`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
-### Run (win):
-```shell
-cd out
-.\storage.exe
-```
-```shell
-cd out
-.\calculationServer.exe
-```
-
-To start more calculation servers, edit `.env` (change name `CALCULATION_SERVER_NAME`) and run `.\calculationServer.exe` in another terminal:
-```shell
-cd out
-.\calculationServer.exe
-```
 
 API is available at http://localhost:8080/api/v1 and UI at http://localhost:3000.
 
@@ -155,7 +99,7 @@ When all instructions are calculated, the result is sent to the storage server.
 ![computingPowers](assets/computingPowers.png)
 
 # Tests
-You can find integration and unit tests in `calculationServer/tests` and `storage/tests`.\
+You can find unit tests in `calculationServer/tests` and `storage/tests`.\
 For storage testing database is required (see **Database Start** section), also do not forget to change `calculationServer/tests/config_test.go` and `storage/tests/config_test.go` to specify where is postgresql database, number of calculators, and secret key.\
 To run tests:
 ````shell
@@ -166,9 +110,17 @@ cd storage
 go test -v ./tests/...
 ````
 
+You can find integration tests in `integrationTesting/integration_test.go`.\
+**Start docker engine before**
+```shell
+cd integrationTesting
+go test -v .
+```
+
 
 
 # Build gRPC
+gRPC is used to communicate between storage and calculation servers.\
 To build gRPC you need to have `protoc` installed.
 ```shell
 cd calculationServer/internal/storageclient

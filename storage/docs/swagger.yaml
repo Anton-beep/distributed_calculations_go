@@ -110,15 +110,15 @@ definitions:
       message:
         type: string
     type: object
+  api.OutPostOperationsAndTimes:
+    properties:
+      message:
+        type: string
+    type: object
   api.OutRegister:
     properties:
       access:
         type: string
-      message:
-        type: string
-    type: object
-  api.OutSetOperationsAndTimes:
-    properties:
       message:
         type: string
     type: object
@@ -339,11 +339,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/api.OutSetOperationsAndTimes'
+            $ref: '#/definitions/api.OutPostOperationsAndTimes'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.OutSetOperationsAndTimes'
+            $ref: '#/definitions/api.OutPostOperationsAndTimes'
       summary: Set operations and times
       tags:
       - operations

@@ -297,13 +297,13 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/api.OutSetOperationsAndTimes"
+                            "$ref": "#/definitions/api.OutPostOperationsAndTimes"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/api.OutSetOperationsAndTimes"
+                            "$ref": "#/definitions/api.OutPostOperationsAndTimes"
                         }
                     }
                 }
@@ -604,20 +604,20 @@ const docTemplate = `{
                 }
             }
         },
+        "api.OutPostOperationsAndTimes": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "api.OutRegister": {
             "type": "object",
             "properties": {
                 "access": {
                     "type": "string"
                 },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "api.OutSetOperationsAndTimes": {
-            "type": "object",
-            "properties": {
                 "message": {
                     "type": "string"
                 }
