@@ -60,7 +60,7 @@ jobs:
           POSTGRESQL_PASSWORD: password
           POSTGRESQL_HOST: localhost
           POSTGRESQL_NAME: postgres
-          RESET_POSTGRESQL: "TRUE"
+          RESET_POSTGRESQL: "FALSE"
           POSTGRESQL_PORT: 5432
           CHECK_SERVER_DURATION: 5
 
