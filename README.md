@@ -5,7 +5,7 @@ Distributed calculations written in Go language. This project assumes all standa
 
 # Configure (using .env)
 You can skip this part, if you will use docker to deploy the project.\
-Create `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specifies environmental variables, i.e. config). To do this you can use `.env.template` (`calculationServer/.env.template`, `storage/.env.template`, `ui-storage/.env`) and just put your values there.
+Use `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specifies environmental variables, i.e. config).
 ### CalculationServer
 - `STORAGE_URL` - URL of storage server ***(If you are using docker to deploy calculation server write `http://host.docker.internal:<storage port>`!!!)***
 - `NUMBER_OF_CALCULATORS` - Number of calculators (workers) that will be created
@@ -15,11 +15,12 @@ Create `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specif
 ### Storage
 - `POSTGRESQL_USER` - User for database
 - `POSTGRESQL_PASSWORD` - Password for database
-- `POSTGRESQL_DB` - Database name
 - `POSTGRESQL_HOST` - Host of database ***(If you are using docker to deploy storage write `host.docker.internal`!!!)***
 - `POSTGRESQL_PORT` - Port of database
+- `POSTGRESQL_NAME` - Database name
 - `RESET_POSTGRESQL` - If `TRUE` then database will be reset (drop table expressions) on start of the storage server
 - `CHECK_SERVER_DURATION` - Duration of checking if calculation server is alive
+- `SECRET_SIGNATURE` - Secret key for signature of the token
 
 ### Ui-storage
 - `REACT_APP_STORAGE_API_URL` - URL of storage server
@@ -34,7 +35,7 @@ docker-compose up
 ## Run From Releases (windows)
 Start database:
 ```shell
-docker run --name db -p 5432:5432 -e  POSTGRES_USER=user -e POSTGRES_PASSWORD=password -d postgres:16
+docker run --name ant-db -p 5432:5432 -e  POSTGRES_USER=user -e POSTGRES_PASSWORD=password -d postgres:16
 ```
 
 Check [releases](https://github.com/Anton-beep/distributed_calculations_go/releases/latest) and download the latest version.
@@ -63,7 +64,7 @@ npm run build
 mv build ../out
 cd ..
 ```
-You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env.template`, `calculationServer/.env.template` and `ui-storage/.env.template`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
+You also need to create a `.env` file in `out` folder (i.e. near executables) (see `storage/.env`, `calculationServer/.env` and `ui-storage/.env`) or set environmental variables in your system. Then run executable files in `out` directory (in a terminal).
 
 API is available at http://localhost:8080/api/v1 and UI at http://localhost:3000.
 

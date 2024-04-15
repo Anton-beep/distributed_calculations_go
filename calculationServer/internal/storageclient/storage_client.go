@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -65,8 +66,10 @@ func New() (*Client, error) {
 	c.keepAlive = time.Duration(num) * time.Second
 
 	c.serverName = os.Getenv("CALCULATION_SERVER_NAME")
-	if c.serverName == "" {
-		c.serverName = "noname"
+	if c.serverName == "" || c.serverName == "noname" {
+		rand.Seed(time.Now().UnixNano())
+		randomNumber := rand.Intn(10001)
+		c.serverName = "noname" + strconv.Itoa(randomNumber)
 	}
 	return c, nil
 }

@@ -63,19 +63,11 @@ func New() (*APIDb, error) {
 	return a, nil
 }
 
-func GetSQLFromFile(name string) (string, error) {
-	data, err := os.ReadFile(name)
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
-}
-
 func (a *APIDb) ResetDatabase() {
 	var err error
 	for i := 0; i < 3; i++ {
 		zap.S().Warn(fmt.Sprintf("Attempt %d: Resetting database", i+1))
-		command, err := GetSQLFromFile("sqlScripts/resetDB.sql")
+		command := "DROP TABLE IF EXISTS expressions;\nDROP TABLE IF EXISTS users;\n\nCREATE TABLE users\n(\n    id       SERIAL PRIMARY KEY,\n    login    TEXT,\n    password TEXT\n);\n\nCREATE TABLE expressions\n(\n    id                   SERIAL PRIMARY KEY,\n    value                TEXT,\n    answer               FLOAT,\n    logs                 TEXT,\n    ready                INT,\n    alive_expires_at     BIGINT,\n    creation_time        TEXT,\n    end_calculation_time TEXT,\n    server_name          TEXT,\n    user_id              INT,\n    CONSTRAINT fk_user\n        FOREIGN KEY (user_id)\n            REFERENCES users (id)\n);\n\nCREATE TABLE operations\n(\n    id            SERIAL PRIMARY KEY,\n    time_add      INT,\n    time_subtract INT,\n    time_divide   INT,\n    time_multiply INT,\n    user_id       INT,\n    CONSTRAINT fk_user\n        FOREIGN KEY (user_id)\n            REFERENCES users (id)\n);"
 		if err != nil {
 			zap.S().Warn(fmt.Sprintf("Failed to get SQL from file: %v", err))
 			if i < 2 { // Don't sleep after the last attempt
