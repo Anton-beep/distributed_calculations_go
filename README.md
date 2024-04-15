@@ -28,7 +28,7 @@ Create `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specif
 ***Docker is required! ([install](https://docs.docker.com/engine/install/))***
 
 ```shell
-docker run --name db -p 5432:5432 -e  POSTGRES_USER=user -e POSTGRES_PASSWORD=password -d postgres:16
+docker run --name ant-db -p 5432:5432 -e  POSTGRES_USER=user -e POSTGRES_PASSWORD=password -d postgres:16
 ```
 
 You can also specify local directory for database storage using: `-v <local path>:/var/lib/postgresql/data postgres:16`
@@ -49,17 +49,17 @@ See release section on github if your os is windows, if linux see build section 
 ```shell
 cd calculationServer
 docker build -t calculation-server .
-docker run -d --name calculation-server -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName calculation-server
-docker run -d --name calculation-server2 -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName2 calculation-server
-docker run -d --name calculation-server3 -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName3 calculation-server
+docker run -d --name ant-calculation-server -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName calculation-server
+docker run -d --name ant-calculation-server2 -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName2 calculation-server
+docker run -d --name ant-calculation-server3 -e STORAGE_URL=http://host.docker.internal:8080/api/v1 -e NUMBER_OF_CALCULATORS=5 -e SEND_ALIVE_DURATION=1 -e CALCULATION_SERVER_NAME=serverName3 calculation-server
 cd ..
 cd storage
 docker build -t storage .
-docker run -p 8080:8080 -d --name storage -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=password -e POSTGRESQL_DB=postgres -e POSTGRESQL_HOST=host.docker.internal -e POSTGRESQL_PORT=5432 -e RESET_POSTGRESQL=FALSE -e CHECK_SERVER_DURATION=5 storage
+docker run -p 8080:8080 -d --name ant-storage -e POSTGRESQL_USER=user -e POSTGRESQL_PASSWORD=password -e POSTGRESQL_DB=postgres -e POSTGRESQL_HOST=host.docker.internal -e POSTGRESQL_PORT=5432 -e RESET_POSTGRESQL=FALSE -e CHECK_SERVER_DURATION=5 storage
 cd ..
 cd ui-storage
 docker build -t ui-storage .
-docker run -p 3000:3000 -d --name ui-storage ui-storage
+docker run -p 3000:3000 -d --name ant-ui-storage ui-storage
 ```
 
 ### If you want to use .env files
@@ -67,15 +67,15 @@ Configure three `.env` files (see **Configure (using .env)** section) and then r
 ```shell
 cd calculationServer
 docker build -t calculation-server .
-docker run --env-file .env -d --name calculation-server calculation-server
+docker run --env-file .env -d --name ant-calculation-server calculation-server
 cd ..
 cd storage
 docker build -t storage .
-docker run --env-file .env -p 8080:8080 -d --name storage storage
+docker run --env-file .env -p 8080:8080 -d --name ant-storage storage
 cd ..
 cd ui-storage
 docker build -t ui-storage .
-docker run --env-file .env -p 3000:3000 -d --name ui-storage ui-storage
+docker run --env-file .env -p 3000:3000 -d --name ant-ui-storage ui-storage
 ```
 
 To run more calculation servers edit `.env` and run it again with a different container name.

@@ -40,6 +40,5 @@ func main() {
 		zap.S().Fatal(err)
 	}
 
-	go c.Run()
-
+	c.Run()
 }

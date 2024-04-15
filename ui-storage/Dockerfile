@@ -2,9 +2,6 @@ FROM node:21-alpine3.18
 
 WORKDIR /app
 
-ENV PATH /app/node_modules/.bin:$PATH
-ENV REACT_APP_STORAGE_API_URL=http://localhost:8080/api/v1
-
 COPY package.json ./
 COPY package-lock.json ./
 RUN npm install --silent

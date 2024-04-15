@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
+	"time"
+
 	// postgresql driver.
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
@@ -23,21 +25,26 @@ func New() (*APIDb, error) {
 		zap.S().Warn(err)
 	}
 
+	var db *sql.DB
+
 	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		os.Getenv("POSTGRESQL_USER"),
 		os.Getenv("POSTGRESQL_PASSWORD"),
 		os.Getenv("POSTGRESQL_HOST"),
 		os.Getenv("POSTGRESQL_PORT"),
 		os.Getenv("POSTGRESQL_NAME"))
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
 
-	// check connection
-	err = db.Ping()
-	if err != nil {
-		return nil, err
+	for i := 0; i < 3; i++ {
+		zap.S().Warn(fmt.Sprintf("Attempt %d: Connecting to database: %v", i+1, connStr))
+		db, err = sql.Open("postgres", connStr)
+		if err != nil {
+			zap.S().Warn(fmt.Sprintf("Failed to connect to database: %v", err))
+			if i < 2 { // Don't sleep after the last attempt
+				time.Sleep(5 * time.Second)
+			}
+		} else {
+			break
+		}
 	}
 
 	a := &APIDb{db}
@@ -65,13 +72,30 @@ func GetSQLFromFile(name string) (string, error) {
 }
 
 func (a *APIDb) ResetDatabase() {
-	command, err := GetSQLFromFile("sqlScripts/resetDB.sql")
-	if err != nil {
-		zap.S().Fatal(err)
+	var err error
+	for i := 0; i < 3; i++ {
+		zap.S().Warn(fmt.Sprintf("Attempt %d: Resetting database", i+1))
+		command, err := GetSQLFromFile("sqlScripts/resetDB.sql")
+		if err != nil {
+			zap.S().Warn(fmt.Sprintf("Failed to get SQL from file: %v", err))
+			if i < 2 { // Don't sleep after the last attempt
+				time.Sleep(5 * time.Second)
+			}
+			continue
+		}
+		_, err = a.db.Exec(command)
+		if err != nil {
+			zap.S().Warn(fmt.Sprintf("Failed to reset database: %v", err))
+			if i < 2 { // Don't sleep after the last attempt
+				time.Sleep(2 * time.Second)
+			}
+		} else {
+			break
+		}
 	}
-	_, err = a.db.Exec(command)
+
 	if err != nil {
-		zap.S().Fatal(err)
+		zap.S().Fatal("Failed to reset database after 3 attempts")
 	}
 }
 
