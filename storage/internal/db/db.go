@@ -64,18 +64,10 @@ func New() (*APIDb, error) {
 }
 
 func (a *APIDb) ResetDatabase() {
-	var err error
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 5; i++ {
 		zap.S().Warn(fmt.Sprintf("Attempt %d: Resetting database", i+1))
 		command := "DROP TABLE IF EXISTS expressions;\nDROP TABLE IF EXISTS users;\n\nCREATE TABLE users\n(\n    id       SERIAL PRIMARY KEY,\n    login    TEXT,\n    password TEXT\n);\n\nCREATE TABLE expressions\n(\n    id                   SERIAL PRIMARY KEY,\n    value                TEXT,\n    answer               FLOAT,\n    logs                 TEXT,\n    ready                INT,\n    alive_expires_at     BIGINT,\n    creation_time        TEXT,\n    end_calculation_time TEXT,\n    server_name          TEXT,\n    user_id              INT,\n    CONSTRAINT fk_user\n        FOREIGN KEY (user_id)\n            REFERENCES users (id)\n);\n\nCREATE TABLE operations\n(\n    id            SERIAL PRIMARY KEY,\n    time_add      INT,\n    time_subtract INT,\n    time_divide   INT,\n    time_multiply INT,\n    user_id       INT,\n    CONSTRAINT fk_user\n        FOREIGN KEY (user_id)\n            REFERENCES users (id)\n);"
-		if err != nil {
-			zap.S().Warn(fmt.Sprintf("Failed to get SQL from file: %v", err))
-			if i < 2 { // Don't sleep after the last attempt
-				time.Sleep(5 * time.Second)
-			}
-			continue
-		}
-		_, err = a.db.Exec(command)
+		_, err := a.db.Exec(command)
 		if err != nil {
 			zap.S().Warn(fmt.Sprintf("Failed to reset database: %v", err))
 			if i < 2 { // Don't sleep after the last attempt
@@ -84,10 +76,6 @@ func (a *APIDb) ResetDatabase() {
 		} else {
 			break
 		}
-	}
-
-	if err != nil {
-		zap.S().Fatal("Failed to reset database after 3 attempts")
 	}
 }
 

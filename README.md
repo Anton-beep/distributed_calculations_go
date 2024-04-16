@@ -31,6 +31,7 @@ Use `calculationServer/.env`, `storage/.env`, `ui-storage/.env` files (specifies
 ```shell
 docker-compose up
 ```
+Go to http://localhost:3000 to see the UI.
 
 ## Run From Releases (windows)
 Start database:
