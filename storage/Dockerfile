@@ -10,4 +10,4 @@ RUN go build .
 EXPOSE 8080
 EXPOSE 50051
 
-CMD ["./storage"]
+CMD sleep 30 && ./storage
